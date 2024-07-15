@@ -1,3 +1,6 @@
 ```{r}
 print("hello")
 ```
+```{r}
+print("world")
+```
