@@ -1,11 +1,13 @@
 ---
-title: Book of OHDSI Exercise 10.2
+title: Defining Cohorts in SQL
 format: html
 execute:
   warning: true
 ---
 
-### Exercise 10.2
+## Exercise: Cohort Definitions using SQL
+
+From Exercise 10.2 in the Book of OHDSI
 
 Use SQL and R to create a cohort for acute myocardial infarction (AMI) in the existing COHORT table, following these criteria:
 
@@ -13,6 +15,12 @@ Use SQL and R to create a cohort for acute myocardial infarction (AMI) in the ex
 2.  During an inpatient or ER visit (concepts 9201, 9203, and 262 for “Inpatient visit”, “Emergency Room Visit”, and “Emergency Room and Inpatient Visit”, respectively).
 
 ------------------------------------------------------------------------
+## Solution
+For readability we here split the SQL into two steps.
+
+We first find all condition occurrences of myocardial infarction, and store these in a temp table called “#diagnoses”. Note we are using OHDSI SQL (a subset of SQL Server) to conduct these queries. Behind thse scenes, SqlRender is translating to our chosen dbms (sqlite in our case).
+
+### Connect to Database
 
 First, we need to establish a connection to our database. We will test our connection by getting all the table names.
 
@@ -29,19 +37,148 @@ connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = dbms, ser
 connection = DatabaseConnector::connect(connectionDetails = connectionDetails)
 DatabaseConnector::getTableNames(connection, databaseSchema = 'main')
 ```
-
 Excellent.
 
-For readability we here split the SQL into two steps.
+Now, since I know the default eunomia dataset yields no one in this cohort, I'm going to insert some visit rows, just so we get some people in the cohort.
 
-We first find all condition occurrences of myocardial infarction, and store these in a temp table called “#diagnoses”. Note we are using OHDSI SQL (a subset of SQL Server) to conduct these queries. Behind thse scenes, SqlRender is translating to our chosen dbms (sqlite in our case).
+```{r}
+#| code-fold: true
+
+sql <- "
+delete from visit_occurrence where visit_occurrence_id >= 1000000;
+insert into visit_occurrence(
+  visit_occurrence_id
+  ,person_id
+  ,visit_concept_id
+  ,visit_start_date
+  ,visit_start_datetime
+  ,visit_end_date
+  ,visit_end_datetime
+  ,visit_type_concept_id
+  ,provider_id
+  ,care_site_id
+  ,visit_source_value
+  ,visit_source_concept_id
+  ,admitting_source_concept_id
+  ,admitting_source_value
+  ,discharge_to_concept_id
+  ,discharge_to_source_value
+  ,preceding_visit_occurrence_id
+)
+values(
+  1000000--visit_occurrence_id
+  ,1491--person_id
+  ,9201--visit_concept_id
+  ,strftime('%s', '2011-07-11 12:34:56')--visit_start_date
+  ,strftime('%s', '2011-07-11 12:34:56')--visit_start_datetime
+  ,strftime('%s', '2011-07-13 12:34:56')--visit_end_date
+  ,strftime('%s', '2011-07-13 12:34:56')--visit_end_datetime
+  ,0--visit_type_concept_id
+  ,null--provider_id
+  ,null--care_site_id
+  ,null--visit_source_value
+  ,0--visit_source_concept_id
+  ,0--admitting_source_concept_id
+  ,null--admitting_source_value
+  ,0--discharge_to_concept_id
+  ,null--discharge_to_source_value
+  ,null--preceding_visit_occurrence_id
+), 
+(
+  1000001--visit_occurrence_id
+  ,105--person_id
+  ,262--visit_concept_id
+  ,strftime('%s', '2005-11-10 12:34:56')--visit_start_date
+  ,strftime('%s', '2005-11-10 12:34:56')--visit_start_datetime
+  ,strftime('%s', '2005-11-13 12:34:56')--visit_end_date
+  ,strftime('%s', '2005-11-13 12:34:56')--visit_end_datetime
+  ,0--visit_type_concept_id
+  ,null--provider_id
+  ,null--care_site_id
+  ,null--visit_source_value
+  ,0--visit_source_concept_id
+  ,0--admitting_source_concept_id
+  ,null--admitting_source_value
+  ,0--discharge_to_concept_id
+  ,null--discharge_to_source_value
+  ,null--preceding_visit_occurrence_id
+),
+(
+  1000002--visit_occurrence_id
+  ,96--person_id
+  ,262--visit_concept_id
+  ,strftime('%s', '1997-01-24 12:34:56')--visit_start_date
+  ,strftime('%s', '1997-01-24 12:34:56')--visit_start_datetime
+  ,strftime('%s', '1997-01-26	 12:34:56')--visit_end_date
+  ,strftime('%s', '1997-01-26 12:34:56')--visit_end_datetime
+  ,0--visit_type_concept_id
+  ,null--provider_id
+  ,null--care_site_id
+  ,null--visit_source_value
+  ,0--visit_source_concept_id
+  ,0--admitting_source_concept_id
+  ,null--admitting_source_value
+  ,0--discharge_to_concept_id
+  ,null--discharge_to_source_value
+  ,null--preceding_visit_occurrence_id
+),
+(
+  1000003--visit_occurrence_id
+  ,3049--person_id
+  ,9203--visit_concept_id
+  ,strftime('%s', '1986-12-04 12:34:56')--visit_start_date
+  ,strftime('%s', '1986-12-04 12:34:56')--visit_start_datetime
+  ,strftime('%s', '1986-12-06	 12:34:56')--visit_end_date
+  ,strftime('%s', '1986-12-06 12:34:56')--visit_end_datetime
+  ,0--visit_type_concept_id
+  ,null--provider_id
+  ,null--care_site_id
+  ,null--visit_source_value
+  ,0--visit_source_concept_id
+  ,0--admitting_source_concept_id
+  ,null--admitting_source_value
+  ,0--discharge_to_concept_id
+  ,null--discharge_to_source_value
+  ,null--preceding_visit_occurrence_id
+),
+(
+  1000004--visit_occurrence_id
+  ,2692--person_id
+  ,9201--visit_concept_id
+  ,strftime('%s', '1998-06-28 12:34:56')--visit_start_date
+  ,strftime('%s', '1998-06-28 12:34:56')--visit_start_datetime
+  ,strftime('%s', '1998-06-30 12:34:56')--visit_end_date
+  ,strftime('%s', '1998-06-30 12:34:56')--visit_end_datetime
+  ,0--visit_type_concept_id
+  ,null--provider_id
+  ,null--care_site_id
+  ,null--visit_source_value
+  ,0--visit_source_concept_id
+  ,0--admitting_source_concept_id
+  ,null--admitting_source_value
+  ,0--discharge_to_concept_id
+  ,null--discharge_to_source_value
+  ,null--preceding_visit_occurrence_id
+)
+;
+"
+DatabaseConnector::executeSql(connection = connection, sql = sql)
+```
+
+
+### Get all Myocardial Infraction Conditions
+We will store all condition occurrences of myocardial infraction in a temp table called `#diagnoses`
+
+Before executing the sql, I will just print the statement generated after doing a render |> translate sequence in SqlRender. This is good for debugging.
+
+Recall render() will replace the parameters, while translate translates to our target dialect (sqlite).
 
 ```{r}
 # Recall, we want to include myocardial infraction, except old myocardial infraction
 # We will use variables so we can use this as a template, rather than hard code them into
 # our sql string
-include_concept_id = 4329847 # Myocardial infarction
-exclude_concept_id = 314666 #  Old myocardial infarction
+myocardial_infraction = 4329847 # Myocardial infarction
+old_myocardial_infraction = 314666 #  Old myocardial infarction
 cdm = "main"
 
 # OHDSI SQL, which will need to be translated to sqlite eventually
@@ -56,61 +193,59 @@ FROM @cdm.condition_occurrence
 WHERE condition_concept_id IN (
     SELECT descendant_concept_id
     FROM @cdm.concept_ancestor
-    WHERE ancestor_concept_id = @include_concept_id 
+    WHERE ancestor_concept_id IN(@myocardial_infraction)
 )
   AND condition_concept_id NOT IN (
     SELECT descendant_concept_id
     FROM @cdm.concept_ancestor
-    WHERE ancestor_concept_id = @exclude_concept_id
+    WHERE ancestor_concept_id IN(@old_myocardial_infraction)
 );
 "
 
 # Getting rendered and translated sql, just for printing so you can see it
 executed_sql <- SqlRender::render(
     sql = sql,
-    include_concept_id = include_concept_id,
-    exclude_concept_id = exclude_concept_id,
+    myocardial_infraction = myocardial_infraction,
+    old_myocardial_infraction = old_myocardial_infraction,
     cdm = cdm
   ) |> 
-  SqlRender::translate(targetDialect = "sqlite")
+  SqlRender::translate(targetDialect = dbms)
   
 cat("Query to be executed on sqlite: \n\n", executed_sql)
 
 ```
 
-```{r}
-print(sql)
-```
+Now let's execute it. Note we are doing `renderTranslateExecuteSql`. As the name suggests, this does a render |> translate as above, but also
+executes the sql. Note the parameters (cdm and after) are inserted as the last arguments. The first two are connection and then the sql to render/translate. 
 
-
-Now let's execute it...
 ```{r}
 # Actually executing the query (notice we are render/translate the original sql again)
-print(sql)
 DatabaseConnector::renderTranslateExecuteSql(
   connection = connection, 
   sql = sql, 
   cdm = cdm, 
-  include_concept_id = include_concept_id,
-  exclude_concept_id = exclude_concept_id
+  myocardial_infraction = myocardial_infraction,
+  old_myocardial_infraction = old_myocardial_infraction
 )
-#DatabaseConnector::renderTranslateQuerySql(connection = connection, sql = "select * from #diagnosis")
 ```
+Let's view the results real quick. 
+
+`querySql` allows you to execute raw sql, so I can write straight up sqlite here, no need to bother with "OHDSI SQL". 
+
+Note that I am doing `querySql` rather than `executeSql`. This is because querySql will return the result set, which is why it only accepts a single statement. On the other hand,
+executeSql does not return anything, and can take multiple statements. Note that, after rander/translate, a single statement could get converted into multiple, so if you do
+`renderTranslateQuerySql` and it turns into multiple statements, you will get an error.
 ```{r}
-DatabaseConnector::getTableNames(connection = connection, databaseSchema = "main")
+DatabaseConnector::querySql(connection = connection, sql = "select * from temp.diagnoses limit 10;")
 ```
 
-
-```{r}
-DatabaseConnector::querySql(connection = connection, sql = "select * from temp.diagnoses")
-```
-
+### Get only inpatient or ER visits
 
 We then select only those that occur during an inpatient or ER visit, using some unique COHORT_DEFINITION_ID (we selected ‘1’):
 
 ```{r}
 #  Inpatient or ER
-visit_concepts_to_include <- c(9201, 9203, 262)
+visit_concepts_to_include <- c(9201, 9203, 262) # inpatient or ER
 
 sql <- "
 INSERT INTO @cdm.cohort (
@@ -129,10 +264,11 @@ INNER JOIN @cdm.visit_occurrence v
     AND cohort_start_date <= v.visit_end_date
 WHERE visit_concept_id IN (@visit_concepts_to_include);"
 
+# Printing the render/translate just to show what it is doing...
 sql |> SqlRender::render(cdm = cdm, visit_concepts_to_include = visit_concepts_to_include) |> SqlRender::translate(targetDialect = "sqlite") |> cat()
-
 print(sql)
 
+# Now executing it...
 DatabaseConnector::renderTranslateExecuteSql(
   connection = connection, 
   sql = sql, 
@@ -142,23 +278,6 @@ DatabaseConnector::renderTranslateExecuteSql(
 ```
 
 Let's view the results
-
-```{r}
-DatabaseConnector::querySql(connection = connection, sql = "
-SELECT 
-  subject_id,
-  cohort_start_date,
-  v.visit_start_date,
-  v.visit_end_date,
-  CAST (1 AS INT) AS cohort_definition_id
-FROM temp.diagnoses
-INNER JOIN main.visit_occurrence v
-  ON subject_id = person_id
-    --AND cohort_start_date >= v.visit_start_date
-    --AND cohort_start_date <= v.visit_end_date
-WHERE visit_concept_id IN (9201,9203,262);
-")
-```
 
 
 ```{r}
@@ -187,17 +306,4 @@ DROP TABLE #diagnoses;
 DatabaseConnector::renderTranslateExecuteSql(connection, sql)
 ```
 
-```{r}
-sql <- "SELECT COUNT(DISTINCT(person_id)) AS person_count
-FROM @cdm.drug_exposure
-INNER JOIN @cdm.concept_ancestor
-  ON drug_concept_id = descendant_concept_id
-INNER JOIN @cdm.concept ingredient
-  ON ancestor_concept_id = ingredient.concept_id
-WHERE LOWER(ingredient.concept_name) = 'celecoxib'
-  AND ingredient.concept_class_id = 'Ingredient'
-  AND ingredient.standard_concept = 'S';"
-
-DatabaseConnector::renderTranslateQuerySql(connection, sql, cdm = "main")
-```
 
