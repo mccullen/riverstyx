@@ -1,0 +1,61 @@
+---
+title: Phenotype Library
+format: html
+execute:
+  warning: true
+---
+
+
+## Installation
+Ensure you have PhenotypeLibrary installed
+``` r
+install.packages("remotes")
+remotes::install_github("ohdsi/PhenotypeLibrary")
+```
+
+## View Log of all Phenotypes
+```{r paged.print=FALSE}
+PhenotypeLibrary::getPhenotypeLog()
+```
+
+## Extract one or more Definitions
+Getting cohort definitions by ids
+```{r}
+cohort_ids <- c(1, 2, 3)
+cohortDefinitionSet <- PhenotypeLibrary::getPlCohortDefinitionSet(cohortIds = cohort_ids)
+cohortDefinitionSet
+```
+
+## Export Cohorts
+### json
+
+The json column can be used to import into Atlas
+```{r}
+cohortDefinitionSet$json |> cat()
+```
+
+### sql
+You can also generate the sql if you prefer...
+```{r}
+cohortDefinitionSet$sql |> cat()
+```
+
+## Import From R
+### Connect to Eunomia Synthetic DB
+```{r}
+datasetName = "GiBleed"
+dbms = "sqlite"
+
+datasetLocation <- Eunomia::getDatabaseFile(
+  datasetName = datasetName, 
+  dbms = dbms, 
+  databaseFile = tempfile(fileext = ".sqlite")
+)
+connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = dbms, server = datasetLocation)
+connection = DatabaseConnector::connect(connectionDetails = connectionDetails)
+```
+
+```{r}
+
+```
+

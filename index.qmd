@@ -15,7 +15,7 @@ Please note that these environments may take some time to load and could fail. I
 ### Tutorials
 Direct links to non-interactive outputs of the Quarto tutorials within the environment for easy and quick access.
 
-- [Defining Cohorts](10.2-defining-cohorts.qmd): SQL-based cohort definition using the Eunomia GiBleed dataset in R.
+- [Defining Cohorts](defining-cohorts.qmd): SQL-based cohort definition using the Eunomia GiBleed dataset in R.
 
 ### Related Sites
 

@@ -15,7 +15,9 @@ Use SQL and R to create a cohort for acute myocardial infarction (AMI) in the ex
 2.  During an inpatient or ER visit (concepts 9201, 9203, and 262 for “Inpatient visit”, “Emergency Room Visit”, and “Emergency Room and Inpatient Visit”, respectively).
 
 ------------------------------------------------------------------------
+
 ## Solution
+
 For readability we here split the SQL into two steps.
 
 We first find all condition occurrences of myocardial infarction, and store these in a temp table called “#diagnoses”. Note we are using OHDSI SQL (a subset of SQL Server) to conduct these queries. Behind thse scenes, SqlRender is translating to our chosen dbms (sqlite in our case).
@@ -37,6 +39,7 @@ connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = dbms, ser
 connection = DatabaseConnector::connect(connectionDetails = connectionDetails)
 DatabaseConnector::getTableNames(connection, databaseSchema = 'main')
 ```
+
 Excellent.
 
 Now, since I know the default eunomia dataset yields no one in this cohort, I'm going to insert some visit rows, just so we get some people in the cohort.
@@ -165,11 +168,11 @@ values(
 DatabaseConnector::executeSql(connection = connection, sql = sql)
 ```
 
-
 ### Get all Myocardial Infraction Conditions
+
 We will store all condition occurrences of myocardial infraction in a temp table called `#diagnoses`
 
-Before executing the sql, I will just print the statement generated after doing a render |> translate sequence in SqlRender. This is good for debugging.
+Before executing the sql, I will just print the statement generated after doing a render \|\> translate sequence in SqlRender. This is good for debugging.
 
 Recall render() will replace the parameters, while translate translates to our target dialect (sqlite).
 
@@ -215,8 +218,7 @@ cat("Query to be executed on sqlite: \n\n", executed_sql)
 
 ```
 
-Now let's execute it. Note we are doing `renderTranslateExecuteSql`. As the name suggests, this does a render |> translate as above, but also
-executes the sql. Note the parameters (cdm and after) are inserted as the last arguments. The first two are connection and then the sql to render/translate. 
+Now let's execute it. Note we are doing `renderTranslateExecuteSql`. As the name suggests, this does a render \|\> translate as above, but also executes the sql. Note the parameters (cdm and after) are inserted as the last arguments. The first two are connection and then the sql to render/translate.
 
 ```{r}
 # Actually executing the query (notice we are render/translate the original sql again)
@@ -228,13 +230,13 @@ DatabaseConnector::renderTranslateExecuteSql(
   old_myocardial_infraction = old_myocardial_infraction
 )
 ```
-Let's view the results real quick. 
 
-`querySql` allows you to execute raw sql, so I can write straight up sqlite here, no need to bother with "OHDSI SQL". 
+Let's view the results real quick.
 
-Note that I am doing `querySql` rather than `executeSql`. This is because querySql will return the result set, which is why it only accepts a single statement. On the other hand,
-executeSql does not return anything, and can take multiple statements. Note that, after rander/translate, a single statement could get converted into multiple, so if you do
-`renderTranslateQuerySql` and it turns into multiple statements, you will get an error.
+`querySql` allows you to execute raw sql, so I can write straight up sqlite here, no need to bother with "OHDSI SQL".
+
+Note that I am doing `querySql` rather than `executeSql`. This is because querySql will return the result set, which is why it only accepts a single statement. On the other hand, executeSql does not return anything, and can take multiple statements. Note that, after rander/translate, a single statement could get converted into multiple, so if you do `renderTranslateQuerySql` and it turns into multiple statements, you will get an error.
+
 ```{r}
 DatabaseConnector::querySql(connection = connection, sql = "select * from temp.diagnoses limit 10;")
 ```
@@ -279,7 +281,6 @@ DatabaseConnector::renderTranslateExecuteSql(
 
 Let's view the results
 
-
 ```{r}
 sql <- "
   select * from @cdm.cohort;
@@ -305,5 +306,3 @@ DROP TABLE #diagnoses;
 
 DatabaseConnector::renderTranslateExecuteSql(connection, sql)
 ```
-
-
