@@ -1,0 +1,16 @@
+# R junk
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj
+
+# Quarto junk
+/.quarto/
+/_site/
+
+# OHDSI junk
+errorReportSql.txt
+
+# My junk
+_*

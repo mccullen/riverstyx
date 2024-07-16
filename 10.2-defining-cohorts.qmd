@@ -1,0 +1,203 @@
+---
+title: Book of OHDSI Exercise 10.2
+format: html
+execute:
+  warning: true
+---
+
+### Exercise 10.2
+
+Use SQL and R to create a cohort for acute myocardial infarction (AMI) in the existing COHORT table, following these criteria:
+
+1.  An occurrence of a myocardial infarction diagnose (concept 4329847 “Myocardial infarction” and all of its descendants, excluding concept 314666 “Old myocardial infarction” and any of its descendants).
+2.  During an inpatient or ER visit (concepts 9201, 9203, and 262 for “Inpatient visit”, “Emergency Room Visit”, and “Emergency Room and Inpatient Visit”, respectively).
+
+------------------------------------------------------------------------
+
+First, we need to establish a connection to our database. We will test our connection by getting all the table names.
+
+```{r}
+datasetName = "GiBleed"
+dbms = "sqlite"
+
+datasetLocation <- Eunomia::getDatabaseFile(
+  datasetName = datasetName, 
+  dbms = dbms, 
+  databaseFile = tempfile(fileext = ".sqlite")
+)
+connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = dbms, server = datasetLocation)
+connection = DatabaseConnector::connect(connectionDetails = connectionDetails)
+DatabaseConnector::getTableNames(connection, databaseSchema = 'main')
+```
+
+Excellent.
+
+For readability we here split the SQL into two steps.
+
+We first find all condition occurrences of myocardial infarction, and store these in a temp table called “#diagnoses”. Note we are using OHDSI SQL (a subset of SQL Server) to conduct these queries. Behind thse scenes, SqlRender is translating to our chosen dbms (sqlite in our case).
+
+```{r}
+# Recall, we want to include myocardial infraction, except old myocardial infraction
+# We will use variables so we can use this as a template, rather than hard code them into
+# our sql string
+include_concept_id = 4329847 # Myocardial infarction
+exclude_concept_id = 314666 #  Old myocardial infarction
+cdm = "main"
+
+# OHDSI SQL, which will need to be translated to sqlite eventually
+sql <- "
+drop table if exists #diagnosis;
+
+SELECT 
+  person_id AS subject_id,
+  condition_start_date AS cohort_start_date
+INTO #diagnoses
+FROM @cdm.condition_occurrence
+WHERE condition_concept_id IN (
+    SELECT descendant_concept_id
+    FROM @cdm.concept_ancestor
+    WHERE ancestor_concept_id = @include_concept_id 
+)
+  AND condition_concept_id NOT IN (
+    SELECT descendant_concept_id
+    FROM @cdm.concept_ancestor
+    WHERE ancestor_concept_id = @exclude_concept_id
+);
+"
+
+# Getting rendered and translated sql, just for printing so you can see it
+executed_sql <- SqlRender::render(
+    sql = sql,
+    include_concept_id = include_concept_id,
+    exclude_concept_id = exclude_concept_id,
+    cdm = cdm
+  ) |> 
+  SqlRender::translate(targetDialect = "sqlite")
+  
+cat("Query to be executed on sqlite: \n\n", executed_sql)
+
+```
+
+```{r}
+print(sql)
+```
+
+
+Now let's execute it...
+```{r}
+# Actually executing the query (notice we are render/translate the original sql again)
+print(sql)
+DatabaseConnector::renderTranslateExecuteSql(
+  connection = connection, 
+  sql = sql, 
+  cdm = cdm, 
+  include_concept_id = include_concept_id,
+  exclude_concept_id = exclude_concept_id
+)
+#DatabaseConnector::renderTranslateQuerySql(connection = connection, sql = "select * from #diagnosis")
+```
+```{r}
+DatabaseConnector::getTableNames(connection = connection, databaseSchema = "main")
+```
+
+
+```{r}
+DatabaseConnector::querySql(connection = connection, sql = "select * from temp.diagnoses")
+```
+
+
+We then select only those that occur during an inpatient or ER visit, using some unique COHORT_DEFINITION_ID (we selected ‘1’):
+
+```{r}
+#  Inpatient or ER
+visit_concepts_to_include <- c(9201, 9203, 262)
+
+sql <- "
+INSERT INTO @cdm.cohort (
+  subject_id,
+  cohort_start_date,
+  cohort_definition_id
+  )
+SELECT 
+  subject_id,
+  cohort_start_date,
+  CAST (1 AS INT) AS cohort_definition_id
+FROM #diagnoses
+INNER JOIN @cdm.visit_occurrence v
+  ON subject_id = person_id
+    AND cohort_start_date >= v.visit_start_date
+    AND cohort_start_date <= v.visit_end_date
+WHERE visit_concept_id IN (@visit_concepts_to_include);"
+
+sql |> SqlRender::render(cdm = cdm, visit_concepts_to_include = visit_concepts_to_include) |> SqlRender::translate(targetDialect = "sqlite") |> cat()
+
+print(sql)
+
+DatabaseConnector::renderTranslateExecuteSql(
+  connection = connection, 
+  sql = sql, 
+  cdm = cdm,
+  visit_concepts_to_include = visit_concepts_to_include
+)
+```
+
+Let's view the results
+
+```{r}
+DatabaseConnector::querySql(connection = connection, sql = "
+SELECT 
+  subject_id,
+  cohort_start_date,
+  v.visit_start_date,
+  v.visit_end_date,
+  CAST (1 AS INT) AS cohort_definition_id
+FROM temp.diagnoses
+INNER JOIN main.visit_occurrence v
+  ON subject_id = person_id
+    --AND cohort_start_date >= v.visit_start_date
+    --AND cohort_start_date <= v.visit_end_date
+WHERE visit_concept_id IN (9201,9203,262);
+")
+```
+
+
+```{r}
+sql <- "
+  select * from @cdm.cohort;
+"
+DatabaseConnector::renderTranslateQuerySql(
+  connection = connection,
+  sql = sql,
+  cdm = cdm
+)
+```
+
+Note that an alternative approach would have been to join the conditions to the visits based on the VISIT_OCCURRENCE_ID, instead of requiring the condition date to fall within the visit start and end date. This would likely be more accurate, as it would guarantee that the condition was recorded in relation to the inpatient or ER visit. However, many observational databases do not record the link between visit and diagnose, and we therefore chose to use the dates instead, likely giving us a higher sensitivity but perhaps lower specificity.
+
+Note also that we ignored the cohort end date. Often, when a cohort is used to define an outcome we are only interested in the cohort start date, and there is no point in creating an (ill-defined) cohort end date.
+
+It is recommended to clean up any temp tables when no longer needed:
+
+```{r}
+sql <- "
+TRUNCATE TABLE #diagnoses;
+DROP TABLE #diagnoses;
+"
+
+DatabaseConnector::renderTranslateExecuteSql(connection, sql)
+```
+
+```{r}
+sql <- "SELECT COUNT(DISTINCT(person_id)) AS person_count
+FROM @cdm.drug_exposure
+INNER JOIN @cdm.concept_ancestor
+  ON drug_concept_id = descendant_concept_id
+INNER JOIN @cdm.concept ingredient
+  ON ancestor_concept_id = ingredient.concept_id
+WHERE LOWER(ingredient.concept_name) = 'celecoxib'
+  AND ingredient.concept_class_id = 'Ingredient'
+  AND ingredient.standard_concept = 'S';"
+
+DatabaseConnector::renderTranslateQuerySql(connection, sql, cdm = "main")
+```
+
