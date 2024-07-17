@@ -56,7 +56,6 @@ cohortDefinitionSet$sql |> cat()
 
 ```{r}
 #| output: false
-#| cache: true
 #| label: gibleed
 datasetName = "GiBleed"
 dbms = "sqlite"
@@ -126,16 +125,20 @@ DatabaseConnector::querySql(connection = connection, sql = sql)
 #| label: exec-diagnostics
 exportFolder = "./cohort-diagnostics"
 cohortTable = "cohort" # Not sure why you would have it a different name?
-CohortDiagnostics::executeDiagnostics(
-  cohortDefinitionSet,
-  connectionDetails = connectionDetails,
-  cohortTable = cohortTable,
-  cohortDatabaseSchema = cohortDatabaseSchema,
-  cdmDatabaseSchema = cdmDatabaseSchema,
-  exportFolder = exportFolder,
-  databaseId = "MyCdm",
-  minCellCount = 5
-)
+
+# Wrapping in try/catch so it works in binder...
+tryCatch({
+  CohortDiagnostics::executeDiagnostics(
+    cohortDefinitionSet,
+    connectionDetails = connectionDetails,
+    cohortTable = cohortTable,
+    cohortDatabaseSchema = cohortDatabaseSchema,
+    cdmDatabaseSchema = cdmDatabaseSchema,
+    exportFolder = exportFolder,
+    databaseId = "MyCdm",
+    minCellCount = 5
+  )
+}, error = function(e) {})
 ```
 
 ### Viewing Cohort Diagnostics
@@ -144,7 +147,7 @@ CohortDiagnostics::executeDiagnostics(
 #| label: merge-results
 #| cache: true
 #| output: false
-sqliteDbPath <- "./data/cohort-diagnostics.sqlite"
+sqliteDbPath <- "./cohort-diagnostics.sqlite"
 CohortDiagnostics::createMergedResultsFile(
   dataFolder = exportFolder, 
   overwrite = TRUE,

@@ -1,6 +1,6 @@
-## River Styx
+## RiverStyx
 
-River Styx is a platform for exploring the OHDSI HADES packages. 
+RiverStyx is a platform for exploring the OHDSI HADES packages. 
 
 Launch interactive tutorials or view outputs directly on this page.
 

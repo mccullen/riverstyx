@@ -1,9 +1,9 @@
 ---
 title: Defining Cohorts in SQL
 #format: html
-format:
-  html: default
-  pdf: default
+format: html
+  #html: default
+  #pdf: default
 execute:
   warning: true
 ---
