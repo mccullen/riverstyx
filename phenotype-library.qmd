@@ -121,7 +121,6 @@ DatabaseConnector::querySql(connection = connection, sql = sql)
 
 ```{r}
 #| output: false
-#| cache: true
 #| label: exec-diagnostics
 exportFolder = "./cohort-diagnostics"
 cohortTable = "cohort" # Not sure why you would have it a different name?
@@ -145,7 +144,6 @@ tryCatch({
 
 ```{r}
 #| label: merge-results
-#| cache: true
 #| output: false
 sqliteDbPath <- "./cohort-diagnostics.sqlite"
 CohortDiagnostics::createMergedResultsFile(
