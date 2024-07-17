@@ -8,9 +8,14 @@
 # Quarto junk
 /.quarto/
 /_site/
+phenotype-library_cache/
 
 # OHDSI junk
 errorReportSql.txt
+data/
+export/
+cohort-diagnostics/
+*.sqlite
 
 # My junk
 _*

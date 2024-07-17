@@ -16,6 +16,7 @@ Please note that these environments may take some time to load and could fail. I
 Direct links to non-interactive outputs of the Quarto tutorials within the environment for easy and quick access.
 
 - [Defining Cohorts](defining-cohorts.qmd): SQL-based cohort definition using the Eunomia GiBleed dataset in R.
+- [Phenotype Library](phenotype-library.qmd): Use the PhenotypeLibrary R package to view OHDSI-vetted phenotypes.
 
 ### Related Sites
 

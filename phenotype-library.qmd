@@ -5,44 +5,59 @@ execute:
   warning: true
 ---
 
-
 ## Installation
+
 Ensure you have PhenotypeLibrary installed
+
 ``` r
 install.packages("remotes")
 remotes::install_github("ohdsi/PhenotypeLibrary")
 ```
 
 ## View Log of all Phenotypes
+
 ```{r paged.print=FALSE}
 PhenotypeLibrary::getPhenotypeLog()
 ```
 
 ## Extract one or more Definitions
+
 Getting cohort definitions by ids
+
 ```{r}
-cohort_ids <- c(1, 2, 3)
+cohort_ids <- c(77)
 cohortDefinitionSet <- PhenotypeLibrary::getPlCohortDefinitionSet(cohortIds = cohort_ids)
 cohortDefinitionSet
 ```
 
 ## Export Cohorts
+
 ### json
 
 The json column can be used to import into Atlas
-```{r}
+
+```{r, output.fold=TRUE}
+
 cohortDefinitionSet$json |> cat()
 ```
 
 ### sql
+
 You can also generate the sql if you prefer...
+
 ```{r}
+#| code-fold: true
 cohortDefinitionSet$sql |> cat()
 ```
 
 ## Import From R
+
 ### Connect to Eunomia Synthetic DB
+
 ```{r}
+#| output: false
+#| cache: true
+#| label: gibleed
 datasetName = "GiBleed"
 dbms = "sqlite"
 
@@ -55,7 +70,94 @@ connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = dbms, ser
 connection = DatabaseConnector::connect(connectionDetails = connectionDetails)
 ```
 
-```{r}
+### Create Cohort Tables
 
+New tables will be generated for cohort diagnostics/generation
+
+```{r}
+CohortGenerator::getCohortTableNames() |> str()
 ```
 
+Let's create the tables
+
+```{r}
+cdmDatabaseSchema <- "main"
+cohortDatabaseSchema <- "main"
+CohortGenerator::createCohortTables(
+  connectionDetails = connectionDetails, 
+  cohortDatabaseSchema = cohortDatabaseSchema
+)
+```
+
+### Populate Cohort Tables
+
+Recall, we used the GI Bleed cohort definition, and that is in cohortDefinitionSet.
+
+Let's now populate our newly generated cohort tables using that definition and our existing data from Eunomia GiBleed dataset.
+
+```{r}
+#| label: create-cohort-tbl
+#| output: false
+
+cohortTables <- CohortGenerator::getCohortTableNames()
+CohortGenerator::generateCohortSet(
+  connectionDetails = connectionDetails,
+  cdmDatabaseSchema = cdmDatabaseSchema,
+  cohortDatabaseSchema = cohortDatabaseSchema,
+  cohortTableNames = cohortTables,
+  cohortDefinitionSet = cohortDefinitionSet
+)
+```
+
+Let's have a look at our main cohort table. Notice: - cohort_definition_id is 77, corresponding to the cohort 77 for GI Bleed - We have subjects in and out of the cohort at the respective start/end dates, as per our definition of a cohort
+
+```{r}
+sql <- "
+select * from main.cohort limit 10;
+"
+DatabaseConnector::querySql(connection = connection, sql = sql)
+```
+
+### Export Cohort Diagnostics
+
+```{r}
+#| output: false
+#| cache: true
+#| label: exec-diagnostics
+exportFolder = "./cohort-diagnostics"
+cohortTable = "cohort" # Not sure why you would have it a different name?
+CohortDiagnostics::executeDiagnostics(
+  cohortDefinitionSet,
+  connectionDetails = connectionDetails,
+  cohortTable = cohortTable,
+  cohortDatabaseSchema = cohortDatabaseSchema,
+  cdmDatabaseSchema = cdmDatabaseSchema,
+  exportFolder = exportFolder,
+  databaseId = "MyCdm",
+  minCellCount = 5
+)
+```
+
+### Viewing Cohort Diagnostics
+
+```{r}
+#| label: merge-results
+#| cache: true
+#| output: false
+sqliteDbPath <- "./data/cohort-diagnostics.sqlite"
+CohortDiagnostics::createMergedResultsFile(
+  dataFolder = exportFolder, 
+  overwrite = TRUE,
+  sqliteDbPath = sqliteDbPath
+)
+```
+
+```{r}
+DatabaseConnector::getTableNames(connection)
+```
+
+```{r}
+#| eval: false
+#| label: diagnostics-viewer
+CohortDiagnostics::launchDiagnosticsExplorer(sqliteDbPath = sqliteDbPath)
+```
