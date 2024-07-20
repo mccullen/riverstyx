@@ -158,6 +158,21 @@ DatabaseConnector::getTableNames(connection)
 ```
 
 ```{r}
+library(DBI)
+library(RSQLite)
+
+con <- dbConnect(RSQLite::SQLite(), "./cohort-diagnostics.sqlite")
+```
+
+```{r}
+dbListTables(con)
+```
+
+```{r}
+dbGetQuery(con, "SELECT * FROM database")
+```
+
+```{r}
 #| eval: false
 #| label: diagnostics-viewer
 CohortDiagnostics::launchDiagnosticsExplorer(sqliteDbPath = sqliteDbPath)
