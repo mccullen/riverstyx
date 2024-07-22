@@ -1,8 +1,5 @@
 ---
 title: Phenotype Library
-format: html
-execute:
-  warning: true
 ---
 
 ## Installation
@@ -16,8 +13,8 @@ remotes::install_github("ohdsi/PhenotypeLibrary")
 
 ## View Log of all Phenotypes
 
-```{r paged.print=FALSE}
-PhenotypeLibrary::getPhenotypeLog()
+```{r}
+PhenotypeLibrary::getPhenotypeLog() |> as.data.frame()
 ```
 
 ## Extract one or more Definitions
@@ -36,19 +33,30 @@ cohortDefinitionSet
 
 The json column can be used to import into Atlas
 
-```{r, output.fold=TRUE}
+<details>
+
+<summary>json output</summary>
+
+```{r}
 
 cohortDefinitionSet$json |> cat()
 ```
+
+</details>
 
 ### sql
 
 You can also generate the sql if you prefer...
 
+<details>
+
+<summary>sql output</summary>
+
 ```{r}
-#| code-fold: true
 cohortDefinitionSet$sql |> cat()
 ```
+
+</details>
 
 ## Import From R
 
@@ -142,6 +150,7 @@ tryCatch({
 ```
 
 ### Viewing Cohort Diagnostics
+Create a sqlite file out of results so it can be displayed in an RShiny web app
 
 ```{r}
 #| label: merge-results
@@ -155,14 +164,26 @@ CohortDiagnostics::createMergedResultsFile(
 )
 ```
 
+Launch the WebApp. Note, this works okay locally, not great in mybinder. Something with the java calls is throwing it off, not sure what, but let me know if you find out a fix for this.
+
+```{r}
+#| eval: false
+#| label: diagnostics-viewer
+CohortDiagnostics::launchDiagnosticsExplorer(sqliteDbPath = sqliteDbPath)
+```
+
 
 ## Debugging Stuff
+
 Just playing around, testing things...
+
+Get the table names of original connection
 ```{r}
 #| eval: false
 DatabaseConnector::getTableNames(connection)
 ```
 
+Get a connection to the sqlite file used by the diagnostics viewer
 ```{r}
 #| eval: false
 
@@ -172,18 +193,16 @@ library(RSQLite)
 con <- dbConnect(RSQLite::SQLite(), "./cohort-diagnostics.sqlite")
 ```
 
+List tables in that sqlite file, just to see what they are. Probably match up with the csv files.
 ```{r}
 #| eval: false
 dbListTables(con)
 ```
 
+Ensure you have data in one of the tables. It seems mybinder did not populate this, which resulted in an error. So, after having
+created the files, try refreshing the file explorer bane (bottom right). This may fix things. At least it fixes one error, but then
+you get that java error later on. Still working on it.
 ```{r}
 #| eval: false
 dbGetQuery(con, "SELECT * FROM database")
-```
-
-```{r}
-#| eval: false
-#| label: diagnostics-viewer
-CohortDiagnostics::launchDiagnosticsExplorer(sqliteDbPath = sqliteDbPath)
 ```
