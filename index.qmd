@@ -1,6 +1,6 @@
 ## RiverStyx
 
-RiverStyx is a platform for exploring the OHDSI HADES packages. [Source on GitHub](https://github.com/mccullen/riverstyx)
+RiverStyx is a playground for exploring the OHDSI HADES packages. [Source on GitHub](https://github.com/mccullen/riverstyx)
 
 Launch interactive tutorials or view outputs directly on this page.
 
@@ -15,7 +15,8 @@ Please note that these environments may take some time to load and could fail. I
 ### Tutorials
 Direct links to non-interactive outputs of the Quarto tutorials within the environment for easy and quick access.
 
-- [Defining Cohorts](defining-cohorts.qmd): SQL-based cohort definition using the Eunomia GiBleed dataset in R.
+- [Defining Cohorts in SQL](defining-cohorts-sql.qmd): SQL-based cohort definition using the Eunomia GiBleed dataset in R.
+- [Defining Cohorts in Atlas](defining-cohorts-atlas.qmd): Atlas cohort definition using the Eunomia GiBleed dataset in R.
 - [Phenotype Library](phenotype-library.qmd): Use the PhenotypeLibrary R package to view OHDSI-vetted phenotypes.
 
 ### Related Sites

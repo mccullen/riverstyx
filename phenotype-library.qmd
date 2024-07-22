@@ -121,6 +121,7 @@ DatabaseConnector::querySql(connection = connection, sql = sql)
 
 ```{r}
 #| output: false
+#| eval: false
 #| label: exec-diagnostics
 exportFolder = "./cohort-diagnostics"
 cohortTable = "cohort" # Not sure why you would have it a different name?
@@ -144,6 +145,7 @@ tryCatch({
 
 ```{r}
 #| label: merge-results
+#| eval: false
 #| output: false
 sqliteDbPath <- "./cohort-diagnostics.sqlite"
 CohortDiagnostics::createMergedResultsFile(
@@ -153,11 +155,17 @@ CohortDiagnostics::createMergedResultsFile(
 )
 ```
 
+
+## Debugging Stuff
+Just playing around, testing things...
 ```{r}
+#| eval: false
 DatabaseConnector::getTableNames(connection)
 ```
 
 ```{r}
+#| eval: false
+
 library(DBI)
 library(RSQLite)
 
@@ -165,10 +173,12 @@ con <- dbConnect(RSQLite::SQLite(), "./cohort-diagnostics.sqlite")
 ```
 
 ```{r}
+#| eval: false
 dbListTables(con)
 ```
 
 ```{r}
+#| eval: false
 dbGetQuery(con, "SELECT * FROM database")
 ```
 

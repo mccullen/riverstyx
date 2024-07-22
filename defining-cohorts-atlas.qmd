@@ -1,0 +1,203 @@
+---
+title: Defining Cohorts in Atlas
+---
+
+Here is an example of how to definine the same cohort we did in sql [here](defining-cohorts-sql.qmd), but in Atlas.
+
+After defining the cohort, we will use it with the same Eunomia dataset using the WebAPI, and hopefully get the same results.
+
+## Concept Sets
+
+-   [In-patient/ER](https://atlas-demo.ohdsi.org/#/conceptset/1884483)
+-   [Myocardial Infraction](https://atlas-demo.ohdsi.org/#/conceptset/1884482)
+
+## Cohort Definition
+
+-   [Myocardial Infraction Cohort](https://atlas-demo.ohdsi.org/#/cohortdefinition/1790272)
+
+## Connect to DB
+
+```{r}
+datasetName = "GiBleed"
+dbms = "sqlite"
+
+datasetLocation <- Eunomia::getDatabaseFile(
+  datasetName = datasetName, 
+  dbms = dbms, 
+  databaseFile = tempfile(fileext = ".sqlite")
+)
+connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = dbms, server = datasetLocation)
+connection = DatabaseConnector::connect(connectionDetails = connectionDetails)
+#DatabaseConnector::getTableNames(connection, databaseSchema = 'main')
+DatabaseConnector::querySql(connection = connection, sql = "select count(*) from cohort;")
+```
+
+## Add some Visits
+
+I'm adding some visits so we get some results in the cohort. Fudging the data a bit...
+
+```{r}
+source("util.R")
+insert_visits(connection)
+```
+
+## Get OHDSI Sql from WebAPI
+
+```{r}
+base_url <- "https://api.ohdsi.org/WebAPI"
+#cohort_id <- 1790272
+cohort_id <- 1790274
+generate_stats <- F
+
+cohort_definition <- ROhdsiWebApi::getCohortDefinition(
+  cohortId = cohort_id,
+  baseUrl = base_url
+)
+
+#str(cohort_definition)
+
+sql <- ROhdsiWebApi::getCohortSql(
+  cohortDefinition = cohort_definition,
+  baseUrl = base_url,
+  generateStats = generate_stats
+)
+```
+
+## Render, Translate, Execute
+
+```{r}
+#| results: hide
+DatabaseConnector::renderTranslateExecuteSql(connection = connection, 
+                                             sql = sql, vocabulary_database_schema="main", 
+                                             cdm_database_schema="main", 
+                                             target_database_schema="main",
+                                             target_cohort_table = "cohort",
+                                             target_cohort_id = "1")
+```
+
+## Check Results
+
+```{r}
+sql <- "
+  select * from @cdm.cohort;
+"
+cdm <- "main"
+DatabaseConnector::renderTranslateQuerySql(
+  connection = connection,
+  sql = sql,
+  cdm = cdm
+)
+```
+
+**Subjects in original**: (1491, 105, 96, 3049, 2692)
+
+Only 96 and 1491 make it, and you get a bunch of extras too
+
+```{r}
+
+sql <- "
+select *
+from cohort
+where subject_id IN (1491, 105, 96, 3049, 2692)
+"
+DatabaseConnector::querySql(connection, sql)
+```
+
+## Case of patient who didn't make it, but should
+
+105 didn't make it, lets see why. cohort_start_date should be 2005-11-11
+
+```{r}
+sql <- "
+select 
+  condition_occurrence_id, 
+  condition_concept_id, 
+  condition_start_date, 
+  condition_end_date
+from condition_occurrence
+where person_id IN (105) and condition_start_date = datefromparts(2005, 11, 11)
+order by condition_start_date desc
+"
+DatabaseConnector::renderTranslateQuerySql(connection, sql)
+```
+
+So, 105 has the condition, and it is w/i a visit occurrence timeframe. Why didn't they make it?
+
+```{r}
+sql <- "
+select
+  co.condition_occurrence_id, 
+  co.visit_occurrence_id, 
+  co.condition_concept_id, 
+  co.condition_start_date, 
+  co.condition_end_date, 
+  v.visit_start_date, 
+  v.visit_end_date
+from condition_occurrence co
+INNER JOIN visit_occurrence v
+  ON co.person_id = v.person_id
+    AND co.condition_start_date >= v.visit_start_date
+    AND co.condition_start_date <= v.visit_end_date
+where co.person_id IN (105)  and co.condition_start_date = datefromparts(2005, 11, 11)
+order by condition_start_date desc
+"
+
+DatabaseConnector::renderTranslateQuerySql(connection, sql)
+```
+
+## Case of patient who did make it, but should not
+
+Lets take 264. They made it, but not in the original sql. - Start: 2011-11-11 - End: 2011-11-18
+
+Looks like they do have a myocardial condition on 2011-11-11 (condition_occurrence_id = 4538). It does not have an end date though,
+which is probably okay?
+
+```{r}
+sql <- "
+select 
+  condition_occurrence_id, 
+  condition_concept_id, 
+  condition_start_date, 
+  condition_end_date
+from condition_occurrence
+where person_id IN (264)
+order by condition_start_date desc
+"
+DatabaseConnector::renderTranslateQuerySql(connection, sql)
+```
+
+That condition did not fall within a visit_occurrence timeframe though
+```{r}
+sql <- "
+select 
+  co.condition_occurrence_id, 
+  co.visit_occurrence_id, 
+  co.condition_concept_id, 
+  co.condition_start_date, 
+  co.condition_end_date, 
+  v.visit_start_date, 
+  v.visit_end_date
+from condition_occurrence co
+INNER JOIN visit_occurrence v
+  ON co.person_id = v.person_id
+    AND co.condition_start_date >= v.visit_start_date
+    AND co.condition_start_date <= v.visit_end_date
+where co.person_id IN (264)  and co.condition_occurrence_id = 4538
+order by condition_start_date desc
+"
+
+DatabaseConnector::renderTranslateQuerySql(connection, sql)
+```
+
+They do have visits, but not within the timeframe of that condition_occurence
+
+```{r}
+sql <- "
+select visit_occurrence_id, visit_concept_id, visit_start_date, visit_end_date
+from visit_occurrence
+where person_id IN (264)
+order by visit_start_date desc
+"
+
+DatabaseConnector::renderTranslateQuerySql(connection, sql)
+```
