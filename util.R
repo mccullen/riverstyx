@@ -1,5 +1,31 @@
 insert_visits <- function(connection) {
   sql <- "
+
+insert into concept (
+  concept_id,
+  concept_name,
+  domain_id,
+  vocabulary_id,
+  concept_class_id,
+  standard_concept,
+  concept_code,
+  valid_start_date,
+  valid_end_date,
+  invalid_reason
+)
+values (
+  262--concept_id,
+  ,'Emergency Room and Inpatient Visit'--concept_name,
+  ,'Visit'--domain_id,
+  ,'Visit'--vocabulary_id,
+  ,'Visit'--concept_class_id,
+  ,'S'--standard_concept,
+  ,'ERIP'--concept_code,
+  ,strftime('%s', '1970-01-01 00:00:00')--valid_start_date,
+  ,strftime('%s', '2099-12-31 00:00:00')--valid_end_date,
+  ,null--invalid_reason
+);
+
 delete from visit_occurrence where visit_occurrence_id >= 1000000;
 insert into visit_occurrence(
   visit_occurrence_id
