@@ -69,7 +69,8 @@ sql <- ROhdsiWebApi::getCohortSql(
 ```{r}
 #| results: hide
 DatabaseConnector::renderTranslateExecuteSql(connection = connection, 
-                                             sql = sql, vocabulary_database_schema="main", 
+                                             sql = sql, 
+                                             vocabulary_database_schema="main", 
                                              cdm_database_schema="main", 
                                              target_database_schema="main",
                                              target_cohort_table = "cohort",
@@ -95,6 +96,7 @@ DatabaseConnector::renderTranslateQuerySql(
 Great, we got the same subjects.
 
 ## Characterization
+
 Specify some demographic features
 
 ```{r}
@@ -113,8 +115,8 @@ settings <- FeatureExtraction::createCovariateSettings(
 )
 ```
 
-
 Extract those features across the cohort. Aggregated = T means we are considering the cohort as a whole, not on a per-patient basis.
+
 ```{r}
 covariateData <- FeatureExtraction::getDbCovariateData(
   connectionDetails = connectionDetails,
@@ -128,32 +130,32 @@ covariateData <- FeatureExtraction::getDbCovariateData(
 summary(covariateData)
 ```
 
-
+Well, we have the covariates here and some aggregations, but we need to map the covariateId to an actual description
 ```{r}
 covariateData$covariates
 ```
 
+Same thing for the continuous covariates, we have the covariateId, not the actual description...
 ```{r}
 covariateData$covariatesContinuous
 ```
 
-
-
+Ah, here is the mapping of covariateId to covariateName
 ```{r}
 covariateData$covariateRef
 ```
 
+Lets merge the covariates to the covariateRef to get the results along with the covariateName
+```{r}
+merged <- merge(covariateData$covariates, covariateData$covariateRef, by = "covariateId")
+merged
+```
+
+
+A bit unrelated, but getting "table 1", frequently used in papers. 
 ```{r}
 result <- FeatureExtraction::createTable1(covariateData1 = covariateData)
 print(result, row.names = FALSE, right = FALSE)
 ```
 
-
-```{r}
-merged <- merge(covariateData$covariates, covariateData$covariateRef, by = "covariateId")
-```
-
-```{r}
-merged
-```
 
