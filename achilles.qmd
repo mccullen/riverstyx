@@ -1,0 +1,59 @@
+---
+execute:
+  eval: false
+---
+
+```{r}
+datasetName = "GiBleed"
+dbms = "sqlite"
+
+datasetLocation <- Eunomia::getDatabaseFile(
+  datasetName = datasetName, 
+  dbms = dbms, 
+  databaseFile = tempfile(fileext = ".sqlite")
+)
+connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = dbms, server = datasetLocation)
+connection = DatabaseConnector::connect(connectionDetails = connectionDetails)
+Eunomia::createCohorts(connectionDetails)
+DatabaseConnector::getTableNames(connection, databaseSchema = 'main')
+```
+
+
+
+```{r}
+result <- Achilles::achilles(connectionDetails,
+                   cdmDatabaseSchema = "main",
+                   resultsDatabaseSchema = "main",
+                   sourceName = "Eunomia",
+                   outputFolder = "./data",
+                   cdmVersion = "5.3.0")
+```
+
+
+```{r}
+DatabaseConnector::getTableNames(connection, databaseSchema = 'main')
+```
+```{r}
+DatabaseConnector::querySql(connection, "select * from achilles_analysis limit 100")
+```
+
+```{r}
+DatabaseConnector::querySql(connection, "select * from achilles_results limit 100")
+```
+
+
+```{r}
+DatabaseConnector::querySql(connection, "select * from achilles_results_dist limit 100")
+```
+```{r}
+ETLSyntheaBuilder::exportToSQLite(connectionDetails, "main", SQLiteDbName = "eunomia-achilles.sqlite")
+```
+```{r}
+Achilles::exportToAres(
+  connectionDetails = connectionDetails,
+  cdmDatabaseSchema = "main",
+  resultsDatabaseSchema = "main",
+  vocabDatabaseSchema = "main",
+  outputPath = "./data")
+```
+

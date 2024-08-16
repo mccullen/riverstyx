@@ -1,0 +1,132 @@
+In patients that started using NSAIDs for the first time, predict who will develop a gastrointestinal (GI) bleed in the next year.
+
+The NSAID new-user cohort has COHORT_DEFINITION_ID = 4. The GI bleed cohort has COHORT_DEFINITION_ID = 3.
+
+
+## Setup Synthetic Database with Cohorts
+### Connect to GiBleed Eunomia DB
+```{r}
+datasetName = "GiBleed"
+dbms = "sqlite"
+
+datasetLocation <- Eunomia::getDatabaseFile(
+  datasetName = datasetName, 
+  dbms = dbms, 
+  databaseFile = tempfile(fileext = ".sqlite")
+)
+connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = dbms, server = datasetLocation)
+connection = DatabaseConnector::connect(connectionDetails = connectionDetails)
+DatabaseConnector::getTableNames(connection, databaseSchema = 'main')
+```
+
+### Create Cohorts
+Eunomia has some default cohorts, so we will just use those for this example. Note our cohorts, and their cohortId
+
+- **Target Cohort**: NSAIDs
+- **Outcome Cohort**: GiBleed
+
+The NSAIDs cohort is just the union of celecoxib and diclofenac
+```{r}
+Eunomia::createCohorts(connectionDetails)
+```
+
+## Define Covariates
+Exercise 13.1 Using the PatientLevelPrediction R package, define the covariates you want to use for the prediction and extract the PLP data from the CDM. Create the summary of the PLP data.
+
+We specify a set of covariate settings, and use the getPlpData function to extract the data from the database:
+```{r}
+#| output: false
+dbDetails <- PatientLevelPrediction::createDatabaseDetails(
+    connectionDetails = connectionDetails,
+    cdmDatabaseSchema = "main",
+    cdmDatabaseName = "main",
+    cdmDatabaseId = "main",
+    outcomeTable = "cohort",
+    outcomeIds = 3,
+    targetId = 4
+)
+covSettings <- FeatureExtraction::createCovariateSettings(
+  useDemographicsGender = TRUE,
+  useDemographicsAge = TRUE,
+  useConditionGroupEraLongTerm = TRUE,
+  useConditionGroupEraAnyTimePrior = TRUE,
+  useDrugGroupEraLongTerm = TRUE,
+  useDrugGroupEraAnyTimePrior = TRUE,
+  useVisitConceptCountLongTerm = TRUE,
+  longTermStartDays = -365,
+  endDays = -1)
+
+plpData <- PatientLevelPrediction::getPlpData(
+    databaseDetails = dbDetails,
+    covariateSettings = covSettings,
+    restrictPlpDataSettings = PatientLevelPrediction::createRestrictPlpDataSettings()
+)
+
+
+```
+```{r}
+summary(plpData)
+```
+
+
+
+## Create Study Population
+
+Exercise 13.2 Revisit the design choices you have to make to define the final target population and specify these using the createStudyPopulation function. What will the effect of your choices be on the final size of the target population?
+
+We create a study population for the outcome of interest (in this case the only outcome for which we extracted data), removing subjects who experienced the outcome before they started the NSAID, and requiring 364 days of time-at-risk:
+
+```{r}
+populationSettings <- PatientLevelPrediction::createStudyPopulationSettings(
+    washoutPeriod = 364,
+    firstExposureOnly = F,
+    removeSubjectsWithPriorOutcome = T,
+    priorOutcomeLookback = 9999,
+    riskWindowStart = 1,
+    riskWindowEnd = 365,
+    #addExposureDaysToStart = F,
+    #addExposureDaysToEnd = F,
+    startAnchor = "cohort start",
+    endAnchor = "cohort start",
+    minTimeAtRisk = 364,
+    requireTimeAtRisk = T,
+    includeAllOutcomes = T
+
+)
+population <- PatientLevelPrediction::createStudyPopulation(
+    plpData = plpData, 
+    populationSettings = populationSettings,
+    outcomeId = 3
+)
+nrow(population)
+```
+
+In this case we have lost a few people by removing those that had the outcome prior, and by requiring a time-at-risk of at least 364 days.
+
+## LASSO
+Exercise 13.3 Build a prediction model using LASSO and evaluate its performance using the Shiny application. How well is your model performing?
+
+We run a LASSO model by first creating a model settings object, and then calling the runPlp function. In this case we do a person split, training the model on 75% of the data and evaluating on 25% of the data:
+```{r}
+lassoModel <- PatientLevelPrediction::setLassoLogisticRegression()
+lassoResults <- PatientLevelPrediction::runPlp(
+                       populationSettings = populationSettings,
+                       plpData = plpData,
+                       modelSettings = lassoModel,
+                       outcomeId = 3,
+                       splitSettings = PatientLevelPrediction::createDefaultSplitSetting(type = "stratified", testFraction = 0.25,trainFraction = 0.75, splitSeed = 0, nfold = 3),
+                       saveDirectory = "./data"
+                       )
+```
+Note that for this example set the random seeds both for the LASSO cross-validation and for the train-test split to make sure the results will be the same on multiple runs.
+
+We can now view the results using the Shiny app.
+
+This will launch the app as shown in Figure E.18. Here we see an AUC on the test set of 0.645, which is better than random guessing, but maybe not good enough for clinical practice.
+
+```{r}
+#| eval: false
+#| output: false
+PatientLevelPrediction::viewPlp(lassoResults)
+```
+

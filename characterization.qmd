@@ -7,6 +7,7 @@ title: Characterizations
 For this tutorial, we will use the same cohort and Eunomia GiBleed dataset from the cohort generation tutorial. We will generate it real quick here, but see that tutorial for an explaination.
 
 ```{r}
+#| output: false
 # Connect to DB
 datasetName = "GiBleed"
 dbms = "sqlite"
@@ -80,6 +81,10 @@ DatabaseConnector::renderTranslateExecuteSql(
   visit_concepts_to_include = visit_concepts_to_include
 )
 
+
+```
+
+```{r}
 # View results
 sql <- "
   select * from @cdm.cohort;
@@ -90,6 +95,7 @@ DatabaseConnector::renderTranslateQuerySql(
   cdm = cdm
 )
 ```
+
 
 
 ## Characterization using FeatureExtraction
@@ -114,6 +120,7 @@ settings <- FeatureExtraction::createCovariateSettings(
 Extract those features across the cohort. Aggregated = T means we are considering the cohort as a whole, not on a per-patient basis.
 
 ```{r}
+#| output: false
 covariateData <- FeatureExtraction::getDbCovariateData(
   connectionDetails = connectionDetails,
   cdmDatabaseSchema = "main",
@@ -152,7 +159,7 @@ merged
 A bit unrelated, but getting "table 1", frequently used in papers. 
 ```{r}
 result <- FeatureExtraction::createTable1(covariateData1 = covariateData)
-print(result, row.names = FALSE, right = FALSE)
+print(result, row.names = F, right = T)
 ```
 
 

@@ -1,0 +1,165 @@
+What is the risk of gastrointestinal (GI) bleed in new users of celecoxib compared to new users of diclofenac?
+
+The celecoxib new-user cohort has COHORT_DEFINITION_ID = 1. The diclofenac new-user cohort has COHORT_DEFINITION_ID = 2. The GI bleed cohort has COHORT_DEFINITION_ID = 3. The ingredient concept IDs for celecoxib and diclofenac are 1118084 and 1124300, respectively. Time-at-risk starts on day of treatment initiation, and stops at the end of observation (a so-called intent-to-treat analysis).
+
+## Setup Synthetic Database with Cohorts
+### Connect to GiBleed Eunomia DB
+```{r}
+datasetName = "GiBleed"
+dbms = "sqlite"
+
+datasetLocation <- Eunomia::getDatabaseFile(
+  datasetName = datasetName, 
+  dbms = dbms, 
+  databaseFile = tempfile(fileext = ".sqlite")
+)
+connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = dbms, server = datasetLocation)
+connection = DatabaseConnector::connect(connectionDetails = connectionDetails)
+DatabaseConnector::getTableNames(connection, databaseSchema = 'main')
+```
+
+### Create Cohorts
+Eunomia has some default cohorts, so we will just use those for this example. Note our cohorts, and their cohortId
+
+- **Target Cohort**: Celecoxib
+- **Comparator Cohort**: Diclofenac
+- **Outcome Cohort**: GiBleed
+
+The NSAIDs cohort is just the union of the target and comparator...
+```{r}
+Eunomia::createCohorts(connectionDetails)
+```
+
+---
+
+## Cohort Method Data
+
+[Exercise 12.1](): Using the CohortMethod R package, use the default set of covariates and extract the CohortMethodData from the CDM. Create the summary of the CohortMethodData.
+
+
+
+Lets get the cohort method data. This will get us an S4 R object. We specify the default set of covariates, but exclude the two drugs we are comparing, including 
+all their descendants, because else our propensity model will become perfectly perdictive. 
+```{r}
+nsaids <- c(1118084, 1124300) # celecoxib, diclofenac
+covSettings <- FeatureExtraction::createDefaultCovariateSettings(
+  excludedCovariateConceptIds = nsaids,
+  addDescendantsToExclude = TRUE)
+
+# Load data:
+cmData <- CohortMethod::getDbCohortMethodData(
+  connectionDetails = connectionDetails,
+  cdmDatabaseSchema = "main",
+  targetId = 1,# celecoxib
+  comparatorId = 2, # diclofenac
+  outcomeIds = 3, # GiBleed
+  exposureDatabaseSchema = "main",
+  exposureTable = "cohort",
+  outcomeDatabaseSchema = "main",
+  outcomeTable = "cohort",
+  covariateSettings = covSettings)
+show(cmData)
+```
+Let's have a look at the list of default covariates
+```{r}
+cmData$covariateRef
+```
+
+Let's have a look at all the non-zero covariate values. We will merge to covariateRef to get the friendly description of each covariate
+```{r}
+merged_covariates <- merge(cmData$covariates, cmData$covariateRef, by = "covariateId")
+merged_covariates
+```
+
+Recall, our outcome is GiBleed
+
+```{r}
+cmData$outcomes
+```
+
+
+I will leave it as an exercise for you to further explore the tables of cmData, but let's move on for now.
+
+
+## Create Study Population
+
+Exercise 12.2 Create a study population using the createStudyPopulation function, requiring a 180-day washout period, excluding people who had a prior outcome, and removing people that appear in both cohorts. Did we lose people?
+
+No, we did not. Probably because the restrictions used here were already applied in the cohort definitions.
+
+```{r}
+# Is there anoteher createStudyPopulation method? 
+# This errors if you don't prefix
+# Seems to be in both CohortMethod and PatientLevelPredictor
+studyPop <- CohortMethod::createStudyPopulation(
+  cohortMethodData = cmData,
+  outcomeId = 3,
+  washoutPeriod = 180,
+  removeDuplicateSubjects = "remove all",
+  removeSubjectsWithPriorOutcome = TRUE,
+  riskWindowStart = 0,
+  startAnchor = "cohort start",
+  riskWindowEnd = 99999)
+CohortMethod::drawAttritionDiagram(studyPop)
+```
+
+## Cox Proportional Hazards Model
+
+Exercise 12.3 Fit a Cox proportional hazards model without using any adjustments. What could go wrong if you do this?
+
+```{r}
+model <- CohortMethod::fitOutcomeModel(population = studyPop,
+                         modelType = "cox")
+model
+```
+A value of 1 would indicate no effect, but we have 1.346. This means treatment group has 34.6% higher hazard of event occurring compared to comparator group. 
+The interval [1.10065, 1.65741] indicates that, with 95% confidence, the true hazard ratio lies within this range. Since the interval does not include 1, it suggests that the effect of the treatment is statistically significant at the 5% level. 
+
+It is likely that celecoxib users are not exchangeable with diclofenac users, and that these baseline differences already lead to different risks of the outcome. If we do not adjust for these difference, like in this analysis, we are likely producing biased estimates.
+
+## Fit a Propensity Model
+
+Exercise 12.4 Fit a propensity model. Are the two groups comparable?
+
+We fit a propensity model on our study population, using all covariates we extracted. We then show the preference score distribution:
+
+```{r}
+ps <- CohortMethod::createPs(cohortMethodData = cmData,
+               population = studyPop)
+CohortMethod::plotPs(ps, showCountsLabel = TRUE, showAucLabel = TRUE)
+```
+
+Note that this distribution looks a bit odd, with several spikes. This is because we are using a very small simulated dataset. Real preference score distributions tend to be much smoother.
+
+The propensity model achieves an AUC of 0.63, suggested there are differences between target and comparator cohort. We see quite a lot overlap between the two groups suggesting PS adjustment can make them more comparable.
+
+## PS Stratification
+
+Exercise 12.5 Perform PS stratification using 5 strata. Is covariate balance achieved?
+
+We stratify the population based on the propensity scores, and compute the covariate balance before and after stratification:
+
+```{r}
+strataPop <- CohortMethod::stratifyByPs(ps, numberOfStrata = 5)
+bal <- CohortMethod::computeCovariateBalance(strataPop, cmData)
+CohortMethod::plotCovariateBalanceScatterPlot(bal,
+                                showCovariateCountLabel = TRUE,
+                                showMaxLabel = TRUE,
+                                beforeLabel = "Before stratification",
+                                afterLabel = "After stratification")
+```
+We see that various baseline covariates showed a large (>0.3) standardized difference of means before stratification (x-axis). After stratification, balance is increased, with the maximum standardized difference <= 0.1.
+
+## Fit Cox Proportional Hazards Model using PS strata
+Exercise 12.6 Fit a Cox proportional hazards model using the PS strata. Why is the result different from the unadjusted model?
+
+We fit a outcome model using a Cox regression, but stratify it by the PS strata:
+
+```{r}
+adjModel <- CohortMethod::fitOutcomeModel(population = strataPop,
+                         modelType = "cox",
+                         stratified = TRUE)
+adjModel
+```
+
+We see the adjusted estimate is lower than the unadjusted estimate, and that the 95% confidence interval now includes 1. This is because we are now adjusting for baseline differences between the two exposure groups, thus reducing bias.

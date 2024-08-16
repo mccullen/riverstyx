@@ -1,0 +1,31 @@
+---
+execute:
+  eval: false
+---
+```{r}
+#| eval: false
+datasetName = "GiBleed"
+dbms = "sqlite"
+
+datasetLocation <- Eunomia::getDatabaseFile(
+  datasetName = datasetName, 
+  dbms = dbms, 
+  databaseFile = tempfile(fileext = ".sqlite")
+)
+connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = dbms, server = datasetLocation)
+connection = DatabaseConnector::connect(connectionDetails = connectionDetails)
+Eunomia::createCohorts(connectionDetails)
+DatabaseConnector::getTableNames(connection, databaseSchema = 'main')
+```
+
+
+```{r}
+#| eval: false
+DataQualityDashboard::executeDqChecks(
+  connectionDetails,
+  cdmDatabaseSchema = "main",
+  resultsDatabaseSchema = "main",
+  cdmSourceName = "Eunomia",
+  outputFolder = "C:/dataQualityExample")
+```
+
