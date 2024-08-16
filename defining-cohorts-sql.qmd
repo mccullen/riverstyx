@@ -45,7 +45,8 @@ source("util.R")
 insert_visits(connection)
 ```
 
-### Get all Myocardial Infraction Conditions
+### Define Cohort Entry Event
+Our cohort entry event are Myocardial Infraction Conditions
 
 We will store all condition occurrences of myocardial infraction in a temp table called `#diagnoses`
 
@@ -118,7 +119,9 @@ Note that I am doing `querySql` rather than `executeSql`. This is because queryS
 DatabaseConnector::querySql(connection = connection, sql = "select * from temp.diagnoses limit 10;")
 ```
 
-### Get only inpatient or ER visits
+### Define Inclusion Criteria
+
+Additional inclusion criteria is needed to get only inpatient or ER visits
 
 We then select only those that occur during an inpatient or ER visit, using some unique COHORT_DEFINITION_ID (we selected ‘1’):
 

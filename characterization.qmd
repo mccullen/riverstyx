@@ -1,0 +1,158 @@
+---
+title: Characterizations
+---
+
+
+## Re-creating our AMI Cohort
+For this tutorial, we will use the same cohort and Eunomia GiBleed dataset from the cohort generation tutorial. We will generate it real quick here, but see that tutorial for an explaination.
+
+```{r}
+# Connect to DB
+datasetName = "GiBleed"
+dbms = "sqlite"
+
+datasetLocation <- Eunomia::getDatabaseFile(
+  datasetName = datasetName, 
+  dbms = dbms, 
+  databaseFile = tempfile(fileext = ".sqlite")
+)
+connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = dbms, server = datasetLocation)
+connection = DatabaseConnector::connect(connectionDetails = connectionDetails)
+DatabaseConnector::getTableNames(connection, databaseSchema = 'main')
+source("util.R")
+insert_visits(connection)
+
+# Create Cohort for AMI
+
+# Create cohort entry event temp table using AMI concept set
+myocardial_infraction = 4329847 # Myocardial infarction
+old_myocardial_infraction = 314666 #  Old myocardial infarction
+cdm = "main"
+sql <- "
+drop table if exists #diagnosis;
+
+SELECT 
+  person_id AS subject_id,
+  condition_start_date AS cohort_start_date
+INTO #diagnoses
+FROM @cdm.condition_occurrence
+WHERE condition_concept_id IN (
+    SELECT descendant_concept_id
+    FROM @cdm.concept_ancestor
+    WHERE ancestor_concept_id IN(@myocardial_infraction)
+)
+  AND condition_concept_id NOT IN (
+    SELECT descendant_concept_id
+    FROM @cdm.concept_ancestor
+    WHERE ancestor_concept_id IN(@old_myocardial_infraction)
+);
+"
+DatabaseConnector::renderTranslateExecuteSql(
+  connection = connection, 
+  sql = sql, 
+  cdm = cdm, 
+  myocardial_infraction = myocardial_infraction,
+  old_myocardial_infraction = old_myocardial_infraction
+)
+
+# Create additional inclusion criteria to only include inpatients or ER
+visit_concepts_to_include <- c(9201, 9203, 262) # inpatient or ER concept set
+sql <- "
+INSERT INTO @cdm.cohort (
+  subject_id,
+  cohort_start_date,
+  cohort_definition_id
+  )
+SELECT 
+  subject_id,
+  cohort_start_date,
+  CAST (1 AS INT) AS cohort_definition_id
+FROM #diagnoses
+INNER JOIN @cdm.visit_occurrence v
+  ON subject_id = person_id
+    AND cohort_start_date >= v.visit_start_date
+    AND cohort_start_date <= v.visit_end_date
+WHERE visit_concept_id IN (@visit_concepts_to_include);"
+DatabaseConnector::renderTranslateExecuteSql(
+  connection = connection, 
+  sql = sql, 
+  cdm = cdm,
+  visit_concepts_to_include = visit_concepts_to_include
+)
+
+# View results
+sql <- "
+  select * from @cdm.cohort;
+"
+DatabaseConnector::renderTranslateQuerySql(
+  connection = connection,
+  sql = sql,
+  cdm = cdm
+)
+```
+
+
+## Characterization using FeatureExtraction
+Specify some demographic features
+
+```{r}
+settings <- FeatureExtraction::createCovariateSettings(
+  useDemographicsGender = T,
+  useDemographicsAge = T,
+  useDemographicsAgeGroup = T,
+  useDemographicsRace = T,
+  useDemographicsEthnicity = T,
+  useDemographicsIndexYear = T,
+  useDemographicsIndexMonth = T,
+  useDemographicsPriorObservationTime = T,
+  useDemographicsPostObservationTime = T,
+  useDemographicsTimeInCohort = T,
+  useDemographicsIndexYearMonth = T
+)
+```
+
+Extract those features across the cohort. Aggregated = T means we are considering the cohort as a whole, not on a per-patient basis.
+
+```{r}
+covariateData <- FeatureExtraction::getDbCovariateData(
+  connectionDetails = connectionDetails,
+  cdmDatabaseSchema = "main",
+  cohortDatabaseSchema = "main",
+  cohortTable = "cohort",
+  cohortIds = c(1),
+  covariateSettings = settings,
+  aggregated = TRUE
+)
+summary(covariateData)
+```
+
+Well, we have the covariates here and some aggregations, but we need to map the covariateId to an actual description
+```{r}
+covariateData$covariates
+```
+
+Same thing for the continuous covariates, we have the covariateId, not the actual description...
+```{r}
+covariateData$covariatesContinuous
+```
+
+Here is the mapping of covariateId to covariateName
+```{r}
+covariateData$covariateRef
+```
+
+Lets merge the covariates to the covariateRef to get the results along with the covariateName
+```{r}
+merged <- merge(covariateData$covariates, covariateData$covariateRef, by = "covariateId")
+merged
+```
+
+## Getting Table 1
+
+A bit unrelated, but getting "table 1", frequently used in papers. 
+```{r}
+result <- FeatureExtraction::createTable1(covariateData1 = covariateData)
+print(result, row.names = FALSE, right = FALSE)
+```
+
+

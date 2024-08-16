@@ -30,6 +30,9 @@ connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = dbms, ser
 connection = DatabaseConnector::connect(connectionDetails = connectionDetails)
 #DatabaseConnector::getTableNames(connection, databaseSchema = 'main')
 DatabaseConnector::querySql(connection = connection, sql = "select count(*) from cohort;")
+
+source("util.R")
+insert_visits(connection)
 ```
 
 ## Add some Visits
@@ -46,8 +49,6 @@ insert_visits(connection)
 ```{r}
 base_url <- "https://api.ohdsi.org/WebAPI"
 cohort_id <- 1790272
-#cohort_id <- 1790274
-#cohort_id <- 1790286
 generate_stats <- F
 
 cohort_definition <- ROhdsiWebApi::getCohortDefinition(
@@ -95,67 +96,4 @@ DatabaseConnector::renderTranslateQuerySql(
 
 Great, we got the same subjects.
 
-## Characterization
-
-Specify some demographic features
-
-```{r}
-settings <- FeatureExtraction::createCovariateSettings(
-  useDemographicsGender = T,
-  useDemographicsAge = T,
-  useDemographicsAgeGroup = T,
-  useDemographicsRace = T,
-  useDemographicsEthnicity = T,
-  useDemographicsIndexYear = T,
-  useDemographicsIndexMonth = T,
-  useDemographicsPriorObservationTime = T,
-  useDemographicsPostObservationTime = T,
-  useDemographicsTimeInCohort = T,
-  useDemographicsIndexYearMonth = T
-)
-```
-
-Extract those features across the cohort. Aggregated = T means we are considering the cohort as a whole, not on a per-patient basis.
-
-```{r}
-covariateData <- FeatureExtraction::getDbCovariateData(
-  connectionDetails = connectionDetails,
-  cdmDatabaseSchema = "main",
-  cohortDatabaseSchema = "main",
-  cohortTable = "cohort",
-  cohortIds = c(1),
-  covariateSettings = settings,
-  aggregated = TRUE
-)
-summary(covariateData)
-```
-
-Well, we have the covariates here and some aggregations, but we need to map the covariateId to an actual description
-```{r}
-covariateData$covariates
-```
-
-Same thing for the continuous covariates, we have the covariateId, not the actual description...
-```{r}
-covariateData$covariatesContinuous
-```
-
-Ah, here is the mapping of covariateId to covariateName
-```{r}
-covariateData$covariateRef
-```
-
-Lets merge the covariates to the covariateRef to get the results along with the covariateName
-```{r}
-merged <- merge(covariateData$covariates, covariateData$covariateRef, by = "covariateId")
-merged
-```
-
-
-A bit unrelated, but getting "table 1", frequently used in papers. 
-```{r}
-result <- FeatureExtraction::createTable1(covariateData1 = covariateData)
-print(result, row.names = FALSE, right = FALSE)
-```
-
-
+See the characterization tutorial for how to get some interesting stats on these subjects.

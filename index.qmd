@@ -1,4 +1,4 @@
-## RiverStyx
+# RiverStyx
 
 RiverStyx is a playground for exploring the OHDSI HADES packages. [Source on GitHub](https://github.com/mccullen/riverstyx)
 
@@ -6,19 +6,27 @@ Launch interactive tutorials or view outputs directly on this page.
 
 If you need to quickly query synthetic data, check out [Eirene](https://eirene.netlify.app/playground).
 
-### Launch
+## Launch
 Please note that these environments may take some time to load and could fail. If it fails, try refreshing. Once launched, navigate to the 'riverstyx' directory and open the Quarto document you are interested in.
 
 - [RStudio](https://mybinder.org/v2/gh/mccullen/riverstyx-env/main?urlpath=rstudio): Interactive RStudio environment with HADES tutorials.
 - [Launcher](https://mybinder.org/v2/gh/mccullen/riverstyx-env/main): JupyterHub launcher page for accessing other tools and applications.
 
-### Tutorials
+## Tutorials
 Direct links to non-interactive outputs of the Quarto tutorials within the environment for easy and quick access.
 
+### Defining Cohorts
 - [Defining Cohorts in SQL](defining-cohorts-sql.qmd): SQL-based cohort definition using the Eunomia GiBleed dataset in R.
-- [Defining Cohorts in Atlas](defining-cohorts-atlas.qmd): Atlas cohort definition using the Eunomia GiBleed dataset in R.
-- [Phenotype Library](phenotype-library.qmd): Use the PhenotypeLibrary R package to view OHDSI-vetted phenotypes.
+- [Defining Cohorts in Atlas](defining-cohorts-atlas.qmd): Atlas cohort definition using the Eunomia GiBleed dataset in R. 
+- [Phenotype Library](phenotype-library.qmd): Use the PhenotypeLibrary R package to view OHDSI-vetted phenotypes and view cohort diagnostics.
 
-### Related Sites
+### Characterization
+- [Characterization](characterization.qmd): Use the above cohort for AMI to do some characterizations using FeatureExtraction
+
+### Population Estimation
+
+### Patient Level Prediction
+
+## Related Sites
 
 - [Eirene](https://eirene.netlify.app/playground): Direct query access to the Eunomia SQLite database.
