@@ -1,16 +1,16 @@
 # RiverStyx
 
-RiverStyx is a playground for exploring the OHDSI HADES packages. [Source on GitHub](https://github.com/mccullen/riverstyx)
+RiverStyx is a playground for exploring the OHDSI HADES packages. [Source on GitHub](https://github.com/mccullen/riverstyx){target="_blank"}
 
 Launch interactive tutorials or view outputs directly on this page.
 
-If you need to quickly query synthetic data, check out [Eirene](https://eirene.netlify.app/playground).
+If you need to quickly query synthetic data, check out [Eirene](https://eirene.netlify.app/playground){target="_blank"}.
 
 ## Launch
 Please note that these environments may take some time to load and could fail. If it fails, try refreshing. Once launched, navigate to the 'riverstyx' directory and open the Quarto document you are interested in.
 
-- [RStudio](https://mybinder.org/v2/gh/mccullen/riverstyx-env/main?urlpath=rstudio): Interactive RStudio environment with HADES tutorials.
-- [Launcher](https://mybinder.org/v2/gh/mccullen/riverstyx-env/main): JupyterHub launcher page for accessing other tools and applications.
+- [RStudio](https://mybinder.org/v2/gh/mccullen/riverstyx-env/main?urlpath=rstudio){target="_blank"}: Interactive RStudio environment with HADES tutorials.
+- [Launcher](https://mybinder.org/v2/gh/mccullen/riverstyx-env/main){target="_blank"}: JupyterHub launcher page for accessing other tools and applications.
 
 ## Use Case Tutorials
 Direct links to non-interactive outputs of the Quarto tutorials within the environment for easy and quick access.
@@ -40,4 +40,4 @@ Direct links to non-interactive outputs of the Quarto tutorials within the envir
 
 ## Related Sites
 
-- [Eirene](https://eirene.netlify.app/playground): Direct query access to the Eunomia SQLite database.
+- [Eirene](https://eirene.netlify.app/playground){target="_blank"}: Direct query access to the Eunomia SQLite database.
