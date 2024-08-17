@@ -57,3 +57,27 @@ Achilles::exportToAres(
   outputPath = "./data")
 ```
 
+
+```{r}
+DataQualityDashboard::executeDqChecks(
+  connectionDetails,
+  cdmDatabaseSchema = "main",
+  resultsDatabaseSchema = "main",
+  outputFile = "synthea.json",
+  cdmSourceName = "Eunomia",
+  outputFolder = "./data")
+```
+```{r}
+DatabaseConnector::getTableNames(connection, databaseSchema = 'main')
+```
+```{r}
+# Note json_path must be an absolute path...
+json_path <- file.path(getwd(), "data/synthea.json")
+DataQualityDashboard::viewDqDashboard(jsonPath = json_path)
+     
+```
+
+```{r}
+DatabaseConnector::querySql(connection = connection, "select * from main.\"main.dqdashboard_results\"")
+```
+

@@ -1,0 +1,41 @@
+project:
+  type: website
+
+website:
+  title: "RiverStyx"
+  google-analytics: "GTM-WF59D6KK"
+  search: false
+  #search: 
+  #  location: navbar
+  #sidebar: 
+  #  style: "docked"
+  #  search: false
+  #  contents:
+  #    - href: index.qmd
+  #      text: Home
+  #    - href: defining-cohorts-sql.qmd
+  #      text: Defining Cohorts in SQL
+  #    - href: defining-cohorts-atlas.qmd
+  #      text: Defining Cohorts in Atlas
+  #    - href: phenotype-library.qmd
+  #      text: Phenotype Library
+      
+  navbar:
+    search: false
+    pinned: true
+    left: []
+    right: []
+  #  left:
+  #    - href: index.qmd
+  #      text: Home
+  #    - href: defining-cohorts.qmd
+  #      text: Defining Cohorts
+  #    - href: phenotype-library.qmd
+  #      text: Phenotype Library
+
+format:
+  html:
+    df-print: paged
+    theme: cosmo
+    #css: styles.css
+    toc: true
