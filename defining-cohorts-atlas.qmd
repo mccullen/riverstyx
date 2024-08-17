@@ -30,9 +30,6 @@ connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = dbms, ser
 connection = DatabaseConnector::connect(connectionDetails = connectionDetails)
 #DatabaseConnector::getTableNames(connection, databaseSchema = 'main')
 DatabaseConnector::querySql(connection = connection, sql = "select count(*) from cohort;")
-
-source("util.R")
-insert_visits(connection)
 ```
 
 ## Add some Visits

@@ -23,6 +23,9 @@ website:
   navbar:
     search: false
     pinned: true
+    tools:
+      - icon: github
+        href: https://github.com
     left: []
     right: []
   #  left:
