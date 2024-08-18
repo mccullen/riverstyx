@@ -41,6 +41,8 @@ Eunomia::createCohorts(connectionDetails)
 Lets get the cohort method data. This will get us an S4 R object. We specify the default set of covariates, but exclude the two drugs we are comparing, including 
 all their descendants, because else our propensity model will become perfectly perdictive. 
 ```{r}
+#| output: false
+
 nsaids <- c(1118084, 1124300) # celecoxib, diclofenac
 covSettings <- FeatureExtraction::createDefaultCovariateSettings(
   excludedCovariateConceptIds = nsaids,
@@ -58,8 +60,12 @@ cmData <- CohortMethod::getDbCohortMethodData(
   outcomeDatabaseSchema = "main",
   outcomeTable = "cohort",
   covariateSettings = covSettings)
+```
+
+```{r}
 show(cmData)
 ```
+
 Let's have a look at the list of default covariates
 ```{r}
 cmData$covariateRef

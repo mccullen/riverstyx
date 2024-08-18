@@ -12,32 +12,25 @@ Please note that these environments may take some time to load and could fail. I
 - [RStudio](https://mybinder.org/v2/gh/mccullen/riverstyx-env/main?urlpath=rstudio){target="_blank"}: Interactive RStudio environment with HADES tutorials.
 - [Launcher](https://mybinder.org/v2/gh/mccullen/riverstyx-env/main){target="_blank"}: JupyterHub launcher page for accessing other tools and applications.
 
-## Use Case Tutorials
+## Tutorials
+### Defining Cohorts
+- [Defining Cohorts in SQL](defining-cohorts-sql.qmd)  
+*SQL-based cohort definition using the Eunomia GiBleed dataset in R.*
+- [Defining Cohorts in Atlas](defining-cohorts-atlas.qmd)  
+*Atlas cohort definition using the Eunomia GiBleed dataset in R.*
+- [Phenotype Library](phenotype-library.qmd)  
+*Use the PhenotypeLibrary R package to view OHDSI-vetted phenotypes and view cohort diagnostics.*
+
+### Use Cases
 Direct links to non-interactive outputs of the Quarto tutorials within the environment for easy and quick access.
 
-### Defining Cohorts
-- [Defining Cohorts in SQL](defining-cohorts-sql.qmd): SQL-based cohort definition using the Eunomia GiBleed dataset in R.
-- [Defining Cohorts in Atlas](defining-cohorts-atlas.qmd): Atlas cohort definition using the Eunomia GiBleed dataset in R. 
-- [Phenotype Library](phenotype-library.qmd): Use the PhenotypeLibrary R package to view OHDSI-vetted phenotypes and view cohort diagnostics.
+- [Characterization](characterization.qmd)  
+*Use the above cohort for AMI to do some characterizations using FeatureExtraction*
+- [Population Estimation](population-lv-estimation.qmd)  
+*What is the risk of gastrointentional (GI) bleed in new users of celecoxib compared to new users of diclofenac?*
+- [Patient Level Prediction](patient-lv-prediction.qmd)  
+*In patients that started using NSAIDs for the first time, predict who will develop a gastrointestinal (GI) bleed in the next year.*
 
-### Characterization
-- [Characterization](characterization.qmd): Use the above cohort for AMI to do some characterizations using FeatureExtraction
-
-### Population Estimation
-- [Population Estimation](population-lv-estimation.qmd): What is the risk of gastrointentional (GI) bleed in new users of celecoxib compared to new users of diclofenac?
-
-### Patient Level Prediction
-- [Patient Level Prediction](patient-lv-prediction.qmd): In patients that started using NSAIDs for the first time, predict who will develop a gastrointestinal (GI) bleed in the next year.
-
-## Data Quality Tutorials
-### Achilles
+### Data Quality
 - [Achilles](achilles.qmd)
-
-
-### Data Quality Dashboard
 - [Data Quality Dashboard](dqd.qmd)
-
-
-## Related Sites
-
-- [Eirene](https://eirene.netlify.app/playground){target="_blank"}: Direct query access to the Eunomia SQLite database.

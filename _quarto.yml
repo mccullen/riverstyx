@@ -1,24 +1,39 @@
 project:
   type: website
+  output-dir: _site
 
 website:
   title: "RiverStyx"
   google-analytics: "GTM-WF59D6KK"
   search: false
-  #search: 
-  #  location: navbar
-  #sidebar: 
-  #  style: "docked"
-  #  search: false
-  #  contents:
-  #    - href: index.qmd
-  #      text: Home
-  #    - href: defining-cohorts-sql.qmd
-  #      text: Defining Cohorts in SQL
-  #    - href: defining-cohorts-atlas.qmd
-  #      text: Defining Cohorts in Atlas
-  #    - href: phenotype-library.qmd
-  #      text: Phenotype Library
+  sidebar: 
+    style: "docked"
+    search: false
+    contents:
+      - href: index.qmd
+        text: Home
+      - section: "Defining Cohorts"
+        contents:
+        - href: defining-cohorts-sql.qmd
+          text: Defining Cohorts in SQL
+        - href: defining-cohorts-atlas.qmd
+          text: Defining Cohorts in Atlas
+        - href: phenotype-library.qmd
+          text: Phenotype Library
+      - section: "Use Cases"
+        contents:
+        - href: characterization.qmd
+          text: Characterization
+        - href: population-lv-estimation.qmd
+          text: Population Level Estimation
+        - href: patient-lv-prediction.qmd
+          text: Patient Level Prediction
+      - section: "Data Quality"
+        contents:
+        - href: achilles.qmd
+          text: Achilles
+        - href: dqd.qmd
+          text: Data Quality Dashboard
       
   navbar:
     search: false
@@ -27,19 +42,14 @@ website:
       - icon: github
         href: https://github.com/mccullen/riverstyx
         target: _blank
-    left: []
-    right: []
-  #  left:
-  #    - href: index.qmd
-  #      text: Home
-  #    - href: defining-cohorts.qmd
-  #      text: Defining Cohorts
-  #    - href: phenotype-library.qmd
-  #      text: Phenotype Library
 
 format:
   html:
+    toc-expand: 5
     df-print: paged
     theme: cosmo
-    #css: styles.css
+    css: styles.css
     toc: true
+    grid: 
+      # Just force it to take up all available space
+      body-width: 5000px
