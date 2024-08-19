@@ -12,17 +12,17 @@ Using the OHDSI phenotype library
 
 HADES packages used
 
--   [Eunomia](https://ohdsi.github.io/Eunomia/) for connecting to a synthetic OMOP CDM database.
--   [PhenotypeLibrary](https://ohdsi.github.io/PhenotypeLibrary/) for pulling OHDSI-vetted cohort definitions.
--   [CohortGenerator](https://ohdsi.github.io/CohortGenerator/) for generating cohort tables in Eunomia
--   [CohortDiagnostics](https://ohdsi.github.io/CohortDiagnostics/) for launching RShiny app to view cohort diagnostics.
--   [DatabaseConnector](https://ohdsi.github.io/DatabaseConnector/) for connecting to our Eunomia dataset and executing queries
--   [SqlRender](install.packages("SqlRender") for translating sql templates from the phenotype library in "OHDSI SQL" to our target sql dialect (sqlite).
+-   [Eunomia](https://ohdsi.github.io/Eunomia/){target="_blank"} for connecting to a synthetic OMOP CDM database.
+-   [PhenotypeLibrary](https://ohdsi.github.io/PhenotypeLibrary/){target="_blank"} for pulling OHDSI-vetted cohort definitions.
+-   [CohortGenerator](https://ohdsi.github.io/CohortGenerator/){target="_blank"} for generating cohort tables in Eunomia
+-   [CohortDiagnostics](https://ohdsi.github.io/CohortDiagnostics/){target="_blank"} for launching RShiny app to view cohort diagnostics.
+-   [DatabaseConnector](https://ohdsi.github.io/DatabaseConnector/){target="_blank"} for connecting to our Eunomia dataset and executing queries
+
 
 Other Packages used
 
--   [DT](https://rstudio.github.io/DT/) for viewing phenotype log in jquery datatables format.
--   [dplyr](https://dplyr.tidyverse.org/) for piping and data manipulation functions.
+-   [DT](https://rstudio.github.io/DT/){target="_blank"} for viewing phenotype log in jquery datatables format.
+-   [dplyr](https://dplyr.tidyverse.org/){target="_blank"} for piping and data manipulation functions.
 
 ## Installation
 

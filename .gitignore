@@ -8,6 +8,7 @@
 # Quarto junk
 /.quarto/
 /_site/
+site_libs/
 phenotype-library_cache/
 _publish.yml
 
