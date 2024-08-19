@@ -2,32 +2,84 @@
 title: Phenotype Library
 ---
 
+Using the OHDSI phenotype library
+
+1.  Extract the Gastrointestinal bleeding with inpatient admission cohort definition.
+2.  Populate the Eunomia GiBleed cohort table with patients satisfying this definition.
+3.  View cohort diagnostics in RShiny App
+
+------------------------------------------------------------------------
+
+HADES packages used
+
+-   [Eunomia](https://ohdsi.github.io/Eunomia/) for connecting to a synthetic OMOP CDM database.
+-   [PhenotypeLibrary](https://ohdsi.github.io/PhenotypeLibrary/) for pulling OHDSI-vetted cohort definitions.
+-   [CohortGenerator](https://ohdsi.github.io/CohortGenerator/) for generating cohort tables in Eunomia
+-   [CohortDiagnostics](https://ohdsi.github.io/CohortDiagnostics/) for launching RShiny app to view cohort diagnostics.
+-   [DatabaseConnector](https://ohdsi.github.io/DatabaseConnector/) for connecting to our Eunomia dataset and executing queries
+-   [SqlRender](install.packages("SqlRender") for translating sql templates from the phenotype library in "OHDSI SQL" to our target sql dialect (sqlite).
+
+Other Packages used
+
+-   [DT](https://rstudio.github.io/DT/) for viewing phenotype log in jquery datatables format.
+-   [dplyr](https://dplyr.tidyverse.org/) for piping and data manipulation functions.
+
 ## Installation
 
-Ensure you have PhenotypeLibrary installed
-
 ``` r
+# Needed to install some HADES packages
 install.packages("remotes")
+
+# Install HADES packages
+install.packages("Eunomia")
+install.packages("DatabaseConnector")
 remotes::install_github("ohdsi/PhenotypeLibrary")
+remotes::install_github("OHDSI/CohortGenerator")
+remotes::install_github("OHDSI/CohortDiagnostics")
+
+# Other supporting packages
+install.packages("DT")
+install.packages("dplyr")
+```
+
+```{r}
+#| output: false
+library(dplyr)
 ```
 
 ## View Log of all Phenotypes
 
+PhenotypeLog is a tibble.
+
 ```{r}
+class(PhenotypeLibrary::getPhenotypeLog())
+```
+
+It has a lot of columns, so we will just select cohortId and cohortName and pipe it into datatables for a more friendly view.
+
+```{r}
+PhenotypeLibrary::getPhenotypeLog() %>% select(cohortId, cohortName) %>% DT::datatable()
+```
+
+An alternative display of the phenotype library, showing all columns.
+
+```{r}
+#| df-print: paged
 PhenotypeLibrary::getPhenotypeLog() |> as.data.frame()
 ```
 
-## Extract one or more Definitions
+## Extract GI Bleed Cohort
+Using the search function of the DT table above, note that the cohortId for "Gastrointestinal bleeding with inpatient admission" is 77.
 
-Getting cohort definitions by ids
+
+Let's pull this cohort definition set data frame
 
 ```{r}
 cohort_ids <- c(77)
 cohortDefinitionSet <- PhenotypeLibrary::getPlCohortDefinitionSet(cohortIds = cohort_ids)
 cohortDefinitionSet
 ```
-
-## Export Cohorts
+## View Cohort Json and SQL
 
 ### json
 
@@ -58,9 +110,11 @@ cohortDefinitionSet$sql |> cat()
 
 </details>
 
-## Import From R
+## Import Cohort into OMOP CDM Database
+Now that we have the cohort definition, we need to import it into our OMOP CDM database.
 
 ### Connect to Eunomia Synthetic DB
+We will use the Eunomia GiBleed synthetic database for this tutorial, so let's connect to it. 
 
 ```{r}
 #| output: false
@@ -79,13 +133,13 @@ connection = DatabaseConnector::connect(connectionDetails = connectionDetails)
 
 ### Create Cohort Tables
 
-New tables will be generated for cohort diagnostics/generation
+New tables will be generated for cohort diagnostics/generation. Let's have a look at them. 
 
 ```{r}
 CohortGenerator::getCohortTableNames() |> str()
 ```
 
-Let's create the tables
+Let's create the tables on our database
 
 ```{r}
 cdmDatabaseSchema <- "main"
@@ -116,7 +170,12 @@ CohortGenerator::generateCohortSet(
 )
 ```
 
-Let's have a look at our main cohort table. Notice: - cohort_definition_id is 77, corresponding to the cohort 77 for GI Bleed - We have subjects in and out of the cohort at the respective start/end dates, as per our definition of a cohort
+Let's have a look at our main cohort table. 
+
+Notice: 
+
+- cohort_definition_id is 77, corresponding to the cohort 77 for GI Bleed 
+- We have subjects in and out of the cohort at the respective start/end dates, as per our definition of a cohort
 
 ```{r}
 sql <- "
@@ -126,7 +185,9 @@ DatabaseConnector::querySql(connection = connection, sql = sql)
 ```
 
 ## Cohort Diagnostics
+
 ### Export Cohort Diagnostics
+
 Export cohort diagnostics into csv files. This will be used later in an RShiny web-app for visualization
 
 ```{r}
