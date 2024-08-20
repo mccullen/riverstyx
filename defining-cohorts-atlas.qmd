@@ -45,6 +45,7 @@ insert_visits(connection)
 
 ```{r}
 base_url <- "https://api.ohdsi.org/WebAPI"
+#base_url <- "https://atlas-demo.ohdsi.org"
 cohort_id <- 1790272
 generate_stats <- F
 

@@ -2,13 +2,15 @@
 title: Phenotype Library
 ---
 
+## Exercise
+
 Using the OHDSI phenotype library
 
 1.  Extract the Gastrointestinal bleeding with inpatient admission cohort definition.
 2.  Populate the Eunomia GiBleed cohort table with patients satisfying this definition.
 3.  View cohort diagnostics in RShiny App
 
-------------------------------------------------------------------------
+## Packages
 
 HADES packages used
 
@@ -18,13 +20,12 @@ HADES packages used
 -   [CohortDiagnostics](https://ohdsi.github.io/CohortDiagnostics/){target="_blank"} for launching RShiny app to view cohort diagnostics.
 -   [DatabaseConnector](https://ohdsi.github.io/DatabaseConnector/){target="_blank"} for connecting to our Eunomia dataset and executing queries
 
-
 Other Packages used
 
 -   [DT](https://rstudio.github.io/DT/){target="_blank"} for viewing phenotype log in jquery datatables format.
 -   [dplyr](https://dplyr.tidyverse.org/){target="_blank"} for piping and data manipulation functions.
 
-## Installation
+### Installation
 
 ``` r
 # Needed to install some HADES packages
@@ -47,9 +48,15 @@ install.packages("dplyr")
 library(dplyr)
 ```
 
-## View Log of all Phenotypes
+## Extract GI Bleed Cohort
 
-PhenotypeLog is a tibble.
+Let's begin by finding and extracting the GI Bleed cohort into an R variable.
+
+### View Phenotype Log
+
+To start, let's look at the phenotype log. This is a table of all the OHDSI-vetted phenotypes
+
+The PhenotypeLog is a tibble.
 
 ```{r}
 class(PhenotypeLibrary::getPhenotypeLog())
@@ -68,9 +75,9 @@ An alternative display of the phenotype library, showing all columns.
 PhenotypeLibrary::getPhenotypeLog() |> as.data.frame()
 ```
 
-## Extract GI Bleed Cohort
-Using the search function of the DT table above, note that the cohortId for "Gastrointestinal bleeding with inpatient admission" is 77.
+### Find Gi Bleed Cohort
 
+Using the search function of the DT table above, note that the cohortId for "Gastrointestinal bleeding with inpatient admission" is 77.
 
 Let's pull this cohort definition set data frame
 
@@ -79,9 +86,10 @@ cohort_ids <- c(77)
 cohortDefinitionSet <- PhenotypeLibrary::getPlCohortDefinitionSet(cohortIds = cohort_ids)
 cohortDefinitionSet
 ```
-## View Cohort Json and SQL
 
-### json
+### View Cohort Definition
+
+#### json
 
 The json column can be used to import into Atlas
 
@@ -96,7 +104,7 @@ cohortDefinitionSet$json |> cat()
 
 </details>
 
-### sql
+#### sql
 
 You can also generate the sql if you prefer...
 
@@ -110,11 +118,13 @@ cohortDefinitionSet$sql |> cat()
 
 </details>
 
-## Import Cohort into OMOP CDM Database
+## Populate Cohort Table
+
 Now that we have the cohort definition, we need to import it into our OMOP CDM database.
 
-### Connect to Eunomia Synthetic DB
-We will use the Eunomia GiBleed synthetic database for this tutorial, so let's connect to it. 
+### Connect to Database
+
+We will use the Eunomia GiBleed synthetic database for this tutorial, so let's connect to it.
 
 ```{r}
 #| output: false
@@ -133,7 +143,7 @@ connection = DatabaseConnector::connect(connectionDetails = connectionDetails)
 
 ### Create Cohort Tables
 
-New tables will be generated for cohort diagnostics/generation. Let's have a look at them. 
+New tables will be generated for cohort diagnostics/generation. Let's have a look at them.
 
 ```{r}
 CohortGenerator::getCohortTableNames() |> str()
@@ -170,12 +180,12 @@ CohortGenerator::generateCohortSet(
 )
 ```
 
-Let's have a look at our main cohort table. 
+Let's have a look at our main cohort table.
 
-Notice: 
+Notice:
 
-- cohort_definition_id is 77, corresponding to the cohort 77 for GI Bleed 
-- We have subjects in and out of the cohort at the respective start/end dates, as per our definition of a cohort
+-   cohort_definition_id is 77, corresponding to the cohort 77 for GI Bleed
+-   We have subjects in and out of the cohort at the respective start/end dates, as per our definition of a cohort
 
 ```{r}
 sql <- "
@@ -184,7 +194,7 @@ select * from main.cohort limit 10;
 DatabaseConnector::querySql(connection = connection, sql = sql)
 ```
 
-## Cohort Diagnostics
+## View Cohort Diagnostics
 
 ### Export Cohort Diagnostics
 
@@ -194,7 +204,9 @@ Export cohort diagnostics into csv files. This will be used later in an RShiny w
 #| output: false
 #| eval: false
 #| label: exec-diagnostics
-exportFolder = "./data/cohort-diagnostics"
+
+baseFolder = "./resources/artifacts/phenotype-library/"
+exportFolder = file.path(baseFolder, "cohort-diagnostics")
 cohortTable = "cohort" # Not sure why you would have it a different name?
 
 # Wrapping in try/catch so it works in binder...
@@ -212,7 +224,7 @@ tryCatch({
 }, error = function(e) {})
 ```
 
-### Viewing Cohort Diagnostics
+### Launch Cohort Diagnostics Explorer
 
 Create a sqlite file from the CSV output above so it can be displayed in an RShiny web app
 
@@ -220,7 +232,7 @@ Create a sqlite file from the CSV output above so it can be displayed in an RShi
 #| label: merge-results
 #| eval: false
 #| output: false
-sqliteDbPath <- "./data/cohort-diagnostics.sqlite"
+sqliteDbPath <- file.path(baseFolder, "cohort-diagnostics.sqlite")
 CohortDiagnostics::createMergedResultsFile(
   dataFolder = exportFolder, 
   overwrite = TRUE,
@@ -255,7 +267,7 @@ Get a connection to the sqlite file used by the diagnostics viewer
 library(DBI)
 library(RSQLite)
 
-con <- dbConnect(RSQLite::SQLite(), "./data/cohort-diagnostics.sqlite")
+con <- dbConnect(RSQLite::SQLite(), "./resources/artifacts/phenotype-library/cohort-diagnostics.sqlite")
 ```
 
 List tables in that sqlite file, just to see what they are. Probably match up with the csv files.

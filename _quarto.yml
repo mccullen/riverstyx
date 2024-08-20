@@ -42,13 +42,16 @@ website:
       - icon: github
         href: https://github.com/mccullen/riverstyx
         target: _blank
+editor:
+  markdown:
+    cannonical: true
 
 format:
   html:
     toc-expand: 5
     df-print: paged
     theme: cosmo
-    css: styles.css
+    css: resources/styles.css
     toc: true
     grid: 
       # Just force it to take up all available space

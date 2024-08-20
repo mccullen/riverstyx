@@ -14,21 +14,22 @@ You can view the output of the tutorials on this web page, but if you want an in
 
 The best way to run this app is by using RStudio. This approach ensures full functionality, including Shiny apps, which may not perform well in Binder, your other option.
 
-**Prerequisites**  
+**Prerequisites**
 
-- [RStudio](https://posit.co/download/rstudio-desktop/)
-- [Java](https://www.java.com/download/ie_manual.jsp)
-- [Git](https://git-scm.com/downloads)
-- [Python](https://www.python.org/downloads/) (only for certain R packages, such as PatientLevelPrediction)
-- Various R packages (depending on the tutorial)
+-   [RStudio](https://posit.co/download/rstudio-desktop/)
+-   [Java](https://www.java.com/download/ie_manual.jsp)
+-   [Git](https://git-scm.com/downloads)
+-   [Python](https://www.python.org/downloads/) (only for certain R packages, such as PatientLevelPrediction)
+-   Various R packages (depending on the tutorial)
 
-After satisfying the prerequisites, just clone the repository and open in RStudio as a Quarto project, and open the Quarto document of the tutorial you are interested in. 
+After satisfying the prerequisites, just clone the repository and open in RStudio as a Quarto project, and open the Quarto document of the tutorial you are interested in.
 
-```bash
+``` bash
 git clone https://github.com/mccullen/riverstyx.git
 ```
 
 ### Binder
+
 You can also run the app in a Binder environment. However, note that Binder may not handle RShiny apps well.
 
 Please note that these environments may take some time to load and could fail. If it fails, try refreshing. Once launched, navigate to the 'riverstyx' directory and open the Quarto document you are interested in.
@@ -40,25 +41,25 @@ Please note that these environments may take some time to load and could fail. I
 
 ### Defining Cohorts
 
-- [Defining Cohorts in SQL](defining-cohorts-sql.qmd)\
-*SQL-based cohort definition using the Eunomia GiBleed dataset in R.*
-- [Defining Cohorts in Atlas](defining-cohorts-atlas.qmd)\
-*Atlas cohort definition using the Eunomia GiBleed dataset in R.*
-- [Phenotype Library](phenotype-library.qmd)\
-*Use the PhenotypeLibrary R package to view OHDSI-vetted phenotypes and view cohort diagnostics.*
+-   [Defining Cohorts in SQL](defining-cohorts-sql.qmd)\
+    *SQL-based cohort definition using the Eunomia GiBleed dataset in R.*
+-   [Defining Cohorts in Atlas](defining-cohorts-atlas.qmd)\
+    *Atlas cohort definition using the Eunomia GiBleed dataset in R.*
+-   [Phenotype Library](phenotype-library.qmd)\
+    *Use the PhenotypeLibrary R package to view OHDSI-vetted phenotypes and view cohort diagnostics.*
 
 ### Use Cases
 
 Direct links to non-interactive outputs of the Quarto tutorials within the environment for easy and quick access.
 
-- [Characterization](characterization.qmd)\
-*Use the above cohort for AMI to do some characterizations using FeatureExtraction*
-- [Population Estimation](population-lv-estimation.qmd)\
-*What is the risk of gastrointentional (GI) bleed in new users of celecoxib compared to new users of diclofenac?*
-- [Patient Level Prediction](patient-lv-prediction.qmd)\
-*In patients that started using NSAIDs for the first time, predict who will develop a gastrointestinal (GI) bleed in the next year.*
+-   [Characterization](characterization.qmd)\
+    *Use the above cohort for AMI to do some characterizations using FeatureExtraction*
+-   [Population Estimation](population-lv-estimation.qmd)\
+    *What is the risk of gastrointentional (GI) bleed in new users of celecoxib compared to new users of diclofenac?*
+-   [Patient Level Prediction](patient-lv-prediction.qmd)\
+    *In patients that started using NSAIDs for the first time, predict who will develop a gastrointestinal (GI) bleed in the next year.*
 
 ### Data Quality
 
-- [Achilles](achilles.qmd)
-- [Data Quality Dashboard](dqd.qmd)
+-   [Achilles](achilles.qmd)
+-   [Data Quality Dashboard](dqd.qmd)

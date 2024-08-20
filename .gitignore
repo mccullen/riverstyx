@@ -14,9 +14,8 @@ _publish.yml
 
 # OHDSI junk
 errorReportSql.txt
-data/
+resources/artifacts/
 export/
-cohort-diagnostics/
 *.sqlite
 
 # My junk
