@@ -1,0 +1,138 @@
+---
+title: Getting Cohorts Using WebAPI
+---
+
+## Exercise
+
+Using the OHDSI WebAPI
+
+1.  Get cohort definition for Acute Myocardial Infraction
+2.  Populate Eunomia GiBleed cohort table with patients satisfying this definition
+
+We defined this cohort using R and sql in the tutorial [here](defining-cohorts-sql.qmd).
+
+I have already defined this cohort on the Atlas demo site, but it could potentially be deleted in the future so the links below could be broken at some point. To be safe, I have preserved the cohort definition and concept sets used in
+
+```         
+resources/ami-cohort
+```
+
+**Cohort Definition**
+
+-   [Myocardial Infraction Cohort](https://atlas-demo.ohdsi.org/#/cohortdefinition/1790272)
+
+**Concept Sets Used**
+
+-   [Myocardial Infraction](https://atlas-demo.ohdsi.org/#/conceptset/1884482)
+-   [In-patient/ER](https://atlas-demo.ohdsi.org/#/conceptset/1884483)
+
+## Packages
+
+HADES packages used
+
+-   [Eunomia](https://ohdsi.github.io/Eunomia/){target="_blank"} for connecting to a synthetic OMOP CDM database.
+-   [DatabaseConnector](https://ohdsi.github.io/DatabaseConnector/){target="_blank"} for connecting to our Eunomia dataset and populating the cohort table.
+-   [ROhdsiWebApi](https://ohdsi.github.io/ROhdsiWebApi/) for interfacing with the OHDSI WebAPI to get a cohort definition from the Atlas demo site.
+
+### Installation
+
+``` r
+install.packages("remotes")
+
+# Hades packages
+install.packages("Eunomia")
+remotes::install_github("OHDSI/ROhdsiWebApi")
+install.packages("DatabaseConnector")
+```
+
+## Get AMI Cohort Definition
+
+```{r}
+base_url <- "https://api.ohdsi.org/WebAPI"
+cohort_id <- 1790272
+generate_stats <- F
+
+# If webapi is down or our cohort was deleted, we will just load the sql from our local file
+sql <- tryCatch({
+  # First, get the cohort definition
+  cohort_definition <- ROhdsiWebApi::getCohortDefinition(
+    cohortId = cohort_id,
+    baseUrl = base_url
+  )
+  
+  # Pretty complicated looking. Have a look if you want
+  #str(cohort_definition)
+  
+  # Next, get the OHDSI sql using the cohort definition
+  ROhdsiWebApi::getCohortSql(
+    cohortDefinition = cohort_definition,
+    baseUrl = base_url,
+    generateStats = generate_stats
+  )
+}, error = function() {
+  readLines("resources/ami-cohort/cohort-definition/ami-cohort.sql")
+})
+
+```
+
+## Populate Cohort Table
+
+### Connect to Database
+
+```{r}
+datasetName = "GiBleed"
+dbms = "sqlite"
+
+datasetLocation <- Eunomia::getDatabaseFile(
+  datasetName = datasetName, 
+  dbms = dbms, 
+  databaseFile = tempfile(fileext = ".sqlite")
+)
+connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = dbms, server = datasetLocation)
+connection = DatabaseConnector::connect(connectionDetails = connectionDetails)
+DatabaseConnector::querySql(connection = connection, sql = "select count(*) from cohort;")
+```
+
+### Add Visits
+
+I'm adding some visits so we get some results in the cohort. Fudging the data a bit...
+
+```{r}
+source("util.R")
+insert_visits(connection)
+```
+
+### Add Subjects
+
+```{r}
+#| results: hide
+DatabaseConnector::renderTranslateExecuteSql(connection = connection, 
+                                             sql = sql, 
+                                             vocabulary_database_schema="main", 
+                                             cdm_database_schema="main", 
+                                             target_database_schema="main",
+                                             target_cohort_table = "cohort",
+                                             target_cohort_id = "1")
+```
+
+## Check Results
+
+We should get the same subjects as we did in the defining cohorts table. Let's check
+
+**Subjects in original**: (1491, 105, 96, 3049, 2692)
+
+```{r}
+sql <- "
+  select * from @cdm.cohort;
+"
+cdm <- "main"
+DatabaseConnector::renderTranslateQuerySql(
+  connection = connection,
+  sql = sql,
+  cdm = cdm
+)
+```
+
+Great, we got the same subjects.
+
+See the characterization tutorial for how to get some interesting stats on these subjects.

@@ -39,21 +39,21 @@ Please note that these environments may take some time to load and could fail. I
 
 ## Tutorials
 
-### Defining Cohorts
+### Cohorts
 
--   [Defining Cohorts in SQL](defining-cohorts-sql.qmd)\
-    *SQL-based cohort definition using the Eunomia GiBleed dataset in R.*
--   [Defining Cohorts in Atlas](defining-cohorts-atlas.qmd)\
-    *Atlas cohort definition using the Eunomia GiBleed dataset in R.*
--   [Phenotype Library](phenotype-library.qmd)\
-    *Use the PhenotypeLibrary R package to view OHDSI-vetted phenotypes and view cohort diagnostics.*
+-   [Defining Cohorts in SQL and R](defining-cohorts-sql.qmd)\
+    *Use SQL and R to create a cohort for acute myocardial infarction*
+-   [Getting Cohorts using WebAPI](webapi-cohort.qmd)\
+    *Use the WebAPI to get the acute myocardial infraction cohort definition and create a cohort*
+-   [Phenotype Library and Cohort Diagnostics](phenotype-library.qmd)\
+    *Use the phenotype library to extract the GiBleed cohort definition and view diagnostics.*
 
 ### Use Cases
 
 Direct links to non-interactive outputs of the Quarto tutorials within the environment for easy and quick access.
 
 -   [Characterization](characterization.qmd)\
-    *Use the above cohort for AMI to do some characterizations using FeatureExtraction*
+    *Use the acute myocardial infraction cohort to do some characterizations using the FeatureExtraction package*
 -   [Population Estimation](population-lv-estimation.qmd)\
     *What is the risk of gastrointentional (GI) bleed in new users of celecoxib compared to new users of diclofenac?*
 -   [Patient Level Prediction](patient-lv-prediction.qmd)\

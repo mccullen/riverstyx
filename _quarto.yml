@@ -12,14 +12,14 @@ website:
     contents:
       - href: index.qmd
         text: Home
-      - section: "Defining Cohorts"
+      - section: "Cohorts"
         contents:
         - href: defining-cohorts-sql.qmd
           text: Defining Cohorts in SQL
-        - href: defining-cohorts-atlas.qmd
-          text: Defining Cohorts in Atlas
+        - href: webapi-cohort.qmd
+          text: Getting Cohorts using WebAPI
         - href: phenotype-library.qmd
-          text: Phenotype Library
+          text: Phenotype Library and Cohort Diagnostics
       - section: "Use Cases"
         contents:
         - href: characterization.qmd
