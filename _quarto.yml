@@ -24,9 +24,9 @@ website:
         contents:
         - href: characterization.qmd
           text: Characterization
-        - href: population-lv-estimation.qmd
+        - href: population-estimation.qmd
           text: Population Level Estimation
-        - href: patient-lv-prediction.qmd
+        - href: patient-prediction.qmd
           text: Patient Level Prediction
       - section: "Data Quality"
         contents:
