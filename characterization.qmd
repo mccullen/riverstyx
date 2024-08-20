@@ -2,9 +2,33 @@
 title: Characterizations
 ---
 
+## Exercise
 
-## Re-creating our AMI Cohort
-For this tutorial, we will use the same cohort and Eunomia GiBleed dataset from the cohort generation tutorial. We will generate it real quick here, but see that tutorial for an explaination.
+Use the acute myocardial infraction cohort to do some basic characterizations.
+
+## Packages
+
+HADES packages used
+
+-   [Eunomia](https://ohdsi.github.io/Eunomia/){target="_blank"} for connecting to a synthetic OMOP CDM database.
+-   [DatabaseConnector](https://ohdsi.github.io/DatabaseConnector/){target="_blank"} for connecting to our Eunomia dataset and executing queries.
+-   [FeatureExtraction](https://ohdsi.github.io/FeatureExtraction/) for generating covariates for our cohort and getting some aggregated stats.
+
+### Installation
+
+``` r
+# Needed to install some HADES packages
+install.packages("remotes")
+
+# HADES packages
+remotes::install_github("ohdsi/FeatureExtraction")
+install.packages("DatabaseConnector")
+install.packages("Eunomia")
+```
+
+## Create AMI Cohort
+
+For this tutorial, we will use the same cohort and Eunomia GiBleed dataset from the cohort generation tutorial. We will generate it real quick here, but see that tutorial for an explanation.
 
 ```{r}
 #| output: false
@@ -84,6 +108,8 @@ DatabaseConnector::renderTranslateExecuteSql(
 
 ```
 
+### View Subjects
+
 ```{r}
 # View results
 sql <- "
@@ -96,10 +122,21 @@ DatabaseConnector::renderTranslateQuerySql(
 )
 ```
 
+## Get Aggregated Covariate Data
 
+### Specify Covariate Settings
 
-## Characterization using FeatureExtraction
-Specify some demographic features
+We will just specify some demographic features.
+
+::: callout-note
+There is a large set of covariate settings and all are false by default, so you must "opt in" to the covariates you want to extract.
+
+You can view the covariate settings by executing this from the RStudio console
+
+```         
+?FeatureExtraction::createCovariateSettings
+```
+:::
 
 ```{r}
 settings <- FeatureExtraction::createCovariateSettings(
@@ -117,49 +154,61 @@ settings <- FeatureExtraction::createCovariateSettings(
 )
 ```
 
+### Get Covariate Data
+
 Extract those features across the cohort. Aggregated = T means we are considering the cohort as a whole, not on a per-patient basis.
 
 ```{r}
 #| output: false
+
 covariateData <- FeatureExtraction::getDbCovariateData(
   connectionDetails = connectionDetails,
   cdmDatabaseSchema = "main",
   cohortDatabaseSchema = "main",
   cohortTable = "cohort",
-  cohortIds = c(1),
+  cohortIds = c(1), # We gave our cohort Id a value of 1 when we inserted into the cohort table
   covariateSettings = settings,
   aggregated = TRUE
 )
-summary(covariateData)
+str(covariateData) # An S4 object
 ```
 
+#### Discrete Covariates
+
 Well, we have the covariates here and some aggregations, but we need to map the covariateId to an actual description
+
 ```{r}
 covariateData$covariates
 ```
 
+#### Continuous Covariates
+
 Same thing for the continuous covariates, we have the covariateId, not the actual description...
+
 ```{r}
 covariateData$covariatesContinuous
 ```
 
+#### Merging with covariateRef
+
 Here is the mapping of covariateId to covariateName
+
 ```{r}
 covariateData$covariateRef
 ```
 
 Lets merge the covariates to the covariateRef to get the results along with the covariateName
+
 ```{r}
 merged <- merge(covariateData$covariates, covariateData$covariateRef, by = "covariateId")
 merged
 ```
 
-## Getting Table 1
+## Get Table 1
 
-A bit unrelated, but getting "table 1", frequently used in papers. 
+Here is how you get "table 1", frequently used in papers.
+
 ```{r}
 result <- FeatureExtraction::createTable1(covariateData1 = covariateData)
 print(result, row.names = F, right = T)
 ```
-
-
