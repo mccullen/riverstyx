@@ -232,6 +232,7 @@ Create a sqlite file from the CSV output above so it can be displayed in an RShi
 #| label: merge-results
 #| eval: false
 #| output: false
+
 sqliteDbPath <- file.path(baseFolder, "cohort-diagnostics.sqlite")
 CohortDiagnostics::createMergedResultsFile(
   dataFolder = exportFolder, 

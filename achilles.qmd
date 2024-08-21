@@ -25,6 +25,7 @@ First, let's look at the kind of analyses Achilles can perform. Note there are a
 Since a full achilles run will take a long time, we will select a subset of analysis ids.
 
 ```{r}
+#| eval: false
 Achilles::getAnalysisDetails() %>% 
   DT::datatable(options = list(
       scrollX = T,
