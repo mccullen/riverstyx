@@ -2,6 +2,23 @@
 execute:
   eval: false
 ---
+
+```{r}
+checks <- DataQualityDashboard::listDqChecks()
+```
+
+```{r}
+summary(checks)
+```
+
+```{r}
+checks$checkDescriptions
+```
+
+```{r}
+checks$tableChecks
+```
+
 ```{r}
 #| eval: false
 datasetName = "GiBleed"
@@ -18,14 +35,21 @@ Eunomia::createCohorts(connectionDetails)
 DatabaseConnector::getTableNames(connection, databaseSchema = 'main')
 ```
 
-
 ```{r}
 #| eval: false
+base_dir = "resources/artifacts/dqd"
 DataQualityDashboard::executeDqChecks(
   connectionDetails,
   cdmDatabaseSchema = "main",
   resultsDatabaseSchema = "main",
   cdmSourceName = "Eunomia",
-  outputFolder = "C:/dataQualityExample")
+  outputFile = "synthea.json",
+  outputFolder = base_dir)
 ```
 
+```{r}
+# Note json_path must be an absolute path...
+json_path <- file.path(getwd(), base_dir, "synthea.json")
+DataQualityDashboard::viewDqDashboard(jsonPath = json_path)
+     
+```

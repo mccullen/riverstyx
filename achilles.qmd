@@ -3,6 +3,40 @@ execute:
   eval: false
 ---
 
+## Exercise
+
+Use Achilles to
+
+1.  View the kinds of analyses and characterizations it performs.
+2.  Run Acilles
+3.  Generate Achilles SQL
+
+## Packages
+
+### Installation
+
+``` r
+```
+
+## View Analyis Details
+
+First, let's look at the kind of analyses Achilles can perform. Note there are analysis_ids for each kind of analysis.
+
+Since a full achilles run will take a long time, we will select a subset of analysis ids.
+
+```{r}
+Achilles::getAnalysisDetails() %>% 
+  DT::datatable(options = list(
+      scrollX = T,
+      autoWidth = T,
+      columnDefs = list(
+        list(width = '500px', targets = 4),
+        list(width = '200px', targets = 11)
+      )
+    )
+  )
+```
+
 ```{r}
 datasetName = "GiBleed"
 dbms = "sqlite"
@@ -24,8 +58,19 @@ result <- Achilles::achilles(connectionDetails,
                    cdmDatabaseSchema = "main",
                    resultsDatabaseSchema = "main",
                    sourceName = "Eunomia",
-                   outputFolder = "./data",
+                   outputFolder = base_dir,
+                   sqlOnly = T,
+                   analysisIds = 1:10,
                    cdmVersion = "5.3.0")
+```
+
+```{r}
+lines <- readLines(file.path(base_dir, "achilles.sql"))
+sql <- paste(lines, collapse = "\n")
+```
+
+```{r}
+DatabaseConnector::executeSql(connection, sql)
 ```
 
 ```{r}
