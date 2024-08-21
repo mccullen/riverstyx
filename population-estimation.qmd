@@ -216,8 +216,8 @@ Propensity score adjustments are most effective when there are no unmeasured con
 2.  **Calculate Propensity Scores:** Estimate the propensity scores for each patient based on these covariates.
 3.  **Match Patients:** Pair each patient receiving Drug A with a patient receiving Drug B who has the same propensity score.
     -   **Example:**
-        -   Bilbo and Sam both have a propensity score of 0.4 based on their measured characteristics.
-        -   Bilbo receives Drug A, and Sam receives Drug B.
+        -   Bilbo and Frodo both have a propensity score of 0.4 based on their measured characteristics.
+        -   Bilbo receives Drug A, and Frodo receives Drug B.
         -   Both patients are included in the study because they have the same propensity score.
 4.  **Compare Outcomes:** For each patient receiving Drug A, find a matched patient receiving Drug B with the same propensity score and compare their recovery times.
 
